@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext'; 
-import Swal from "sweetalert2";
 
 const API_URL = 'http://localhost:5000/api';
 const PAGE_GROUP_NAME = 'Packing Plant'; 
@@ -427,5 +426,6 @@ const PackingPlantCrud = () => {
         </div>
     );
 };
+
 
 export default PackingPlantCrud;
