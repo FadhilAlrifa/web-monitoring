@@ -134,7 +134,7 @@ const AppLayout = () => {
                         <Routes>
                             <Route path="/login" element={<LoginPage />} />
 
-                            {/* Dashboard & Produksi (Akses Publik) */}
+                            {/* Dashboard & Produksi (Akses Publik) patch baru */}
                             <Route path="/" element={<MasterDashboard />} />
                             <Route path="/produksi" element={<DashboardPage />} />  
                             <Route path="/master" element={<MasterDashboard />} /> 
