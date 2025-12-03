@@ -16,7 +16,11 @@ import PackingPlantMonthlyChart from '../components/PackingPlantMonthlyChart';
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
 
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 const today = new Date();
 
 // Definisi Nama Bulan (FIX: Mengatasi error no-undef pada monthNames)
@@ -401,5 +405,6 @@ const MasterDashboard = () => {
         </div>
     );
 };
+
 
 export default MasterDashboard;
