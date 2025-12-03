@@ -2,7 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Pemuatan';
 const REPORT_API = 'pemuatan/laporan';
 
@@ -406,5 +410,6 @@ const PemuatanCrudPage = () => {
         </div>
     );
 };
+
 
 export default PemuatanCrudPage;
