@@ -19,7 +19,7 @@ const UnitSelector = ({ onSelect, selectedUnit, allowedGroupName }) => {
         const fetchUnits = async () => {
             try {
                 // API mengembalikan daftar unit dengan group_name masing-masing
-                const res = await axios.get(`${API_URL}/units`); 
+                const res = await axios.get(`${API_URL}/api/units`); 
                 
                 // LOGIKA FILTERING BERDASARKAN GROUP NAME
                 let filteredUnits = res.data;
@@ -74,5 +74,6 @@ const UnitSelector = ({ onSelect, selectedUnit, allowedGroupName }) => {
 
 
 export default UnitSelector;
+
 
 
