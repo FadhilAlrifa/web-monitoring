@@ -9,7 +9,11 @@ import UnitSelector from '../components/UnitSelector';
 import PenjumboanDailyChart from '../components/PenjumboanDailyChart'; 
 import PenjumboanMonthlyChart from '../components/PenjumboanMonthlyChart'; 
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Penjumboan'; 
 
 const PenjumboanDashboardPage = () => {
@@ -137,5 +141,6 @@ const PenjumboanDashboardPage = () => {
         </div>
     );
 };
+
 
 export default PenjumboanDashboardPage;
