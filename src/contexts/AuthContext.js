@@ -4,7 +4,11 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
-const API_URL = 'http://localhost:5000/api'; 
+// const API_URL = 'http://localhost:5000/api'; 
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api/users`)
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -71,4 +75,5 @@ export const AuthProvider = ({ children }) => {
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+
 };
