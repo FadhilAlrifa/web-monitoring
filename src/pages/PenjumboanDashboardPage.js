@@ -9,11 +9,10 @@ import UnitSelector from '../components/UnitSelector';
 import PenjumboanDailyChart from '../components/PenjumboanDailyChart'; 
 import PenjumboanMonthlyChart from '../components/PenjumboanMonthlyChart'; 
 
-// const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// Hapus baris fetch(`${API_URL}/api`) karena ini bukan cara memicu API di React
+// fetch(`${API_URL}/api`) 
 const PAGE_GROUP_NAME = 'Penjumboan'; 
 
 const PenjumboanDashboardPage = () => {
@@ -43,15 +42,16 @@ const PenjumboanDashboardPage = () => {
             setIsLoading(true);
             setError(null);
             
-            // Panggil API khusus Penjumboan
-            axios.get(`${API_URL}/penjumboan/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
+            // PERBAIKAN: Tambahkan awalan '/api'
+            axios.get(`${API_URL}/api/penjumboan/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
                  .then(res => {
                      setPenjumboanData(res.data);
                      setIsLoading(false);
                  })
                  .catch(err => {
                      console.error("Gagal mengambil data penjumboan:", err);
-                     setError("Gagal memuat data dashboard Penjumboan. Perlu membuat API /penjumboan/dashboard.");
+                     // Pesan error diubah agar lebih informatif:
+                     setError("Gagal memuat data dashboard Penjumboan. Periksa koneksi API dan konsol.");
                      setIsLoading(false);
                  });
         } else {
