@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 
 // Menerima allowedGroupName: string (misal: 'Pabrik' atau 'BKS')
 const UnitSelector = ({ onSelect, selectedUnit, allowedGroupName }) => { 
@@ -67,5 +71,6 @@ const UnitSelector = ({ onSelect, selectedUnit, allowedGroupName }) => {
         </select>
     );
 };
+
 
 export default UnitSelector;
