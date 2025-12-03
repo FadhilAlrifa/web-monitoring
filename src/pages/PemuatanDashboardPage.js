@@ -11,7 +11,11 @@ import UnitSelector from '../components/UnitSelector';
 import PemuatanDailyChart from '../components/PemuatanDailyChart'; 
 import PemuatanMonthlyChart from '../components/PemuatanMonthlyChart'; 
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Pemuatan'; 
 
 const PemuatanDashboardPage = () => {
@@ -158,5 +162,6 @@ const PemuatanDashboardPage = () => {
         </div>
     );
 };
+
 
 export default PemuatanDashboardPage;
