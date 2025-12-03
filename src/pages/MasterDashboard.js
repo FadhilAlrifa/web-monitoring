@@ -78,16 +78,16 @@ const MasterDashboard = () => {
         switch (moduleKey) {
             case 'pabrik':
             case 'bks':
-                endpoint = `${API_URL}/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; // Produksi/Hambatan
+                endpoint = `${API_URL}/api/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; // Produksi/Hambatan
                 break;
             case 'penjumboan':
-                endpoint = `${API_URL}/penjumboan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; 
+                endpoint = `${API_URL}/api/penjumboan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; 
                 break;
             case 'pemuatan':
-                endpoint = `${API_URL}/pemuatan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;
+                endpoint = `${API_URL}/api/pemuatan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;
                 break;
             case 'packing':
-                endpoint = `${API_URL}/packing-plant/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;
+                endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;
                 break;
             default:
                 return;
@@ -114,7 +114,7 @@ const MasterDashboard = () => {
         else return;
 
         try {
-            const res = await axios.get(`${API_URL}/${apiPath}/rilis/${selectedYear}`);
+            const res = await axios.get(`${API_URL}/api/${apiPath}/rilis/${selectedYear}`);
             setModulStates(prev => ({
                 ...prev,
                 [moduleKey]: { ...prev[moduleKey], data: { ...prev[moduleKey].data, rilisData: res.data } }
@@ -408,3 +408,4 @@ const MasterDashboard = () => {
 
 
 export default MasterDashboard;
+
