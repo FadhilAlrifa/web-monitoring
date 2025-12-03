@@ -11,7 +11,11 @@ import HambatanPieChart from '../components/HambatanPieChart';
 import MonthlyChart from '../components/MonthlyChart';     
 import RilisProduksiChart from '../components/RilisProduksiChart'; // Import Rilis Chart
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
+
+// Panggilan API di frontend:
+fetch(`${API_URL}/api`)
 
 const DashboardPage = ({ unitGroup }) => { 
     const today = new Date();
@@ -251,5 +255,6 @@ const DashboardPage = ({ unitGroup }) => {
         </div>
     );
 };
+
 
 export default DashboardPage;
