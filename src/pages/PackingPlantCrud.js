@@ -230,111 +230,190 @@ const PackingPlantCrud = () => {
 
     // ================= RENDER =================
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="p-6 md:p-10 bg-gray-100 min-h-screen">
 
-            <h1 className="text-3xl font-bold mb-6 text-center">
-                {isEditMode ? "Edit Laporan Packing Plant" : "Input Laporan Packing Plant"}
+            {/* ✅ HEADER */}
+            <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                Packing Plant
             </h1>
-
-            {successMessage && <div className="bg-green-100 text-green-700 p-3 rounded mb-4">{successMessage}</div>}
-            {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
-
-            {/* FORM */}
-            <div className="bg-white p-6 rounded-xl shadow-md mb-8 max-w-5xl mx-auto">
-                <form onSubmit={handleSubmit} className="space-y-6">
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {renderInput('tanggal', 'Tanggal', 'date', isEditMode)}
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold mb-1">Unit Kerja</label>
-                            <select
-                                name="id_unit"
-                                value={formData.id_unit}
-                                onChange={handleChange}
-                                disabled={isEditMode}
-                                className="p-2 border rounded-md"
-                                required
-                            >
-                                <option value="">-- Pilih Unit --</option>
-                                {units.map(u => (
-                                    <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {renderInput('ton_muat', 'Ton Muat')}
-                        {renderInput('target', 'Target Harian')}
-                    </div>
-
-                    {renderInput('target_rkp', 'Target RKAP Bulanan')}
-
-                    <div className="flex justify-between bg-blue-50 p-4 rounded">
-                        <span>Ton Tercatat</span>
-                        <span className="font-bold">{tonMuatTercatat} TON</span>
-                    </div>
-
-                    <div className="flex justify-end gap-3">
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded">
-                            {isEditMode ? "Simpan" : "Tambah"}
-                        </button>
-
-                        {isEditMode && (
-                            <button
-                                type="button"
-                                onClick={handleCancelEdit}
-                                className="bg-gray-400 text-white px-6 py-2 rounded"
-                            >
-                                Batal
-                            </button>
-                        )}
-                    </div>
-
-                </form>
+            <p className="text-sm text-gray-500">Input & Monitoring Produksi</p>
             </div>
 
-            {/* TABEL */}
-            <div className="bg-white p-6 rounded-xl shadow-md">
-                <div className="flex justify-between mb-4">
-                    <h2 className="text-xl font-bold">Data Packing Plant</h2>
-                    <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded">
-                        Download CSV
-                    </button>
+            {/* ✅ ALERT */}
+            {successMessage && (
+            <div className="mb-4 p-3 rounded bg-green-100 text-green-700 text-sm">
+                {successMessage}
+            </div>
+            )}
+            {error && (
+            <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
+                {error}
+            </div>
+            )}
+
+            {/* ✅ CARD FORM */}
+            <div className="bg-white shadow rounded-xl p-6 mb-8">
+            <h2 className="text-lg font-semibold mb-4 border-b pb-2">
+                {isEditMode ? "Edit Laporan" : "Tambah Laporan"}
+            </h2>
+
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                {/* TANGGAL */}
+                <div>
+                <label className="text-sm font-medium">Tanggal</label>
+                <input
+                    type="date"
+                    name="tanggal"
+                    value={formData.tanggal}
+                    onChange={handleChange}
+                    disabled={isEditMode}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                />
                 </div>
 
-                {isLoading ? (
-                    <p>Memuat data...</p>
-                ) : (
-                    <table className="w-full border">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Unit</th>
-                                <th>Ton Muat</th>
-                                <th>Target</th>
-                                <th>RKAP</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredLaporan.map(item => (
-                                <tr key={item.id_laporan} className="border-t text-center">
-                                    <td>{item.tanggal.split('T')[0]}</td>
-                                    <td>{getUnitName(item.id_unit)}</td>
-                                    <td>{item.ton_muat}</td>
-                                    <td>{item.target}</td>
-                                    <td>{item.target_rkp}</td>
-                                    <td className="space-x-2">
-                                        <button onClick={() => handleEdit(item)} className="text-blue-600">Edit</button>
-                                        <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600">Hapus</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                {/* UNIT */}
+                <div>
+                <label className="text-sm font-medium">Unit</label>
+                <select
+                    name="id_unit"
+                    value={formData.id_unit}
+                    onChange={handleChange}
+                    disabled={isEditMode}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                >
+                    <option value="">-- Pilih Unit --</option>
+                    {units.map(u => (
+                    <option key={u.id_unit} value={u.id_unit}>
+                        {u.nama_unit}
+                    </option>
+                    ))}
+                </select>
+                </div>
+
+                {/* TON MUAT */}
+                <div>
+                <label className="text-sm font-medium">Ton Muat</label>
+                <input
+                    type="number"
+                    name="ton_muat"
+                    value={formData.ton_muat}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                />
+                </div>
+
+                {/* TARGET */}
+                <div>
+                <label className="text-sm font-medium">Target Harian</label>
+                <input
+                    type="number"
+                    name="target"
+                    value={formData.target}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                />
+                </div>
+
+                {/* RKAP */}
+                <div>
+                <label className="text-sm font-medium">Target RKAP</label>
+                <input
+                    type="number"
+                    name="target_rkp"
+                    value={formData.target_rkp}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                />
+                </div>
+
+                {/* ✅ BUTTON */}
+                <div className="md:col-span-4 flex justify-end gap-3 mt-4">
+                {isEditMode && (
+                    <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="px-5 py-2 rounded bg-gray-500 text-white"
+                    >
+                    Batal
+                    </button>
                 )}
+
+                <button
+                    type="submit"
+                    className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                >
+                    {isEditMode ? "Simpan" : "Tambah"}
+                </button>
+                </div>
+
+            </form>
             </div>
 
+            {/* ✅ CARD TABEL */}
+            <div className="bg-white shadow rounded-xl p-6">
+
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Data Packing Plant</h2>
+
+                <button
+                onClick={exportToCSV}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                Download CSV
+                </button>
+            </div>
+
+            {isLoading ? (
+                <p className="text-sm text-gray-500">Memuat data...</p>
+            ) : (
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm border">
+                    <thead className="bg-gray-50">
+                    <tr>
+                        <th className="border px-3 py-2">Tanggal</th>
+                        <th className="border px-3 py-2">Unit</th>
+                        <th className="border px-3 py-2">Ton</th>
+                        <th className="border px-3 py-2">Target</th>
+                        <th className="border px-3 py-2">RKAP</th>
+                        <th className="border px-3 py-2">Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {filteredLaporan.map(item => (
+                        <tr key={item.id_laporan} className="hover:bg-gray-50">
+                        <td className="border px-3 py-2">
+                            {item.tanggal.split('T')[0]}
+                        </td>
+                        <td className="border px-3 py-2">
+                            {getUnitName(item.id_unit)}
+                        </td>
+                        <td className="border px-3 py-2">{item.ton_muat}</td>
+                        <td className="border px-3 py-2">{item.target}</td>
+                        <td className="border px-3 py-2">{item.target_rkp}</td>
+                        <td className="border px-3 py-2 space-x-2">
+                            <button
+                            onClick={() => handleEdit(item)}
+                            className="text-blue-600 hover:underline"
+                            >
+                            Edit
+                            </button>
+                            <button
+                            onClick={() => handleDelete(item.id_laporan)}
+                            className="text-red-600 hover:underline"
+                            >
+                            Hapus
+                            </button>
+                        </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+                </div>
+            )}
+
+            </div>
         </div>
     );
 };
