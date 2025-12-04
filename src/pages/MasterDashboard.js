@@ -5,22 +5,21 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Import komponen chart khusus (Diperlukan untuk JSX)
 import UnitSelector from '../components/UnitSelector';
-import DailyChart from '../components/DailyChart';         
-import HambatanPieChart from '../components/HambatanPieChart'; 
-import MonthlyChart from '../components/MonthlyChart';     
-import RilisProduksiChart from '../components/RilisProduksiChart'; 
-import PenjumboanDailyChart from '../components/PenjumboanDailyChart'; 
-import PemuatanDailyChart from '../components/PemuatanDailyChart'; 
+import DailyChart from '../components/DailyChart';       
+import HambatanPieChart from '../components/HambatanPieChart';  
+import MonthlyChart from '../components/MonthlyChart';      
+import RilisProduksiChart from '../components/RilisProduksiChart';  
+import PenjumboanDailyChart from '../components/PenjumboanDailyChart';  
+import PemuatanDailyChart from '../components/PemuatanDailyChart';  
 import PackingPlantDailyChart from '../components/PackingPlantDailyChart';
 import PackingPlantMonthlyChart from '../components/PackingPlantMonthlyChart';
-import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
+import RilisPackingPlantChart from '../components/RilisPackingPlantChart';  
 
 
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS PANGGILAN REDUNDAN: fetch(`${API_URL}/api`)
 const today = new Date();
 
 // Definisi Nama Bulan (FIX: Mengatasi error no-undef pada monthNames)
@@ -45,11 +44,11 @@ const MasterDashboard = () => {
     const [modulStates, setModulStates] = useState({
         // PRODUKSI UMUM (LaporanHarian)
         pabrik:      { unitId: null, name: 'Pabrik', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
-        bks:         { unitId: null, name: 'BKS', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
+        bks:         { unitId: null, name: 'Pelabuhan Biringkassi', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
         // MODUL SPESIFIK
-        penjumboan:  { unitId: null, name: 'Penjumboan', data: { dailyReport: [], monthlyReport: [] } },
-        pemuatan:    { unitId: null, name: 'Pemuatan', data: { dailyReport: [], monthlyReport: [] } },
-        packing:     { unitId: null, name: 'Packing Plant', data: { dailyReport: [], monthlyReport: [], rilisData: [] } },
+        penjumboan:  { unitId: null, name: 'Penjumboan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
+        pemuatan:    { unitId: null, name: 'Pemuatan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
+        packing:     { unitId: null, name: 'Packing Plant', data: { dailyReport: [], monthlyReport: [], rilisData: [], totalProductionMTD: 0 } },
     });
     
     const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +58,8 @@ const MasterDashboard = () => {
     useEffect(() => {
         const fetchMasterUnits = async () => {
             try {
-                const res = await axios.get(`${API_URL}/units`);
+                // PERBAIKAN: Tambahkan /api/
+                const res = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
                 setAllUnits(res.data);
                 setIsLoading(false);
             } catch (err) {
@@ -75,13 +75,14 @@ const MasterDashboard = () => {
         if (!unitId || !selectedYear || !selectedMonth) return;
 
         let endpoint;
+        // Gunakan /api/ pada semua endpoint
         switch (moduleKey) {
             case 'pabrik':
             case 'bks':
-                endpoint = `${API_URL}/api/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; // Produksi/Hambatan
+                endpoint = `${API_URL}/api/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; 
                 break;
             case 'penjumboan':
-                endpoint = `${API_URL}/api/penjumboan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; 
+                endpoint = `${API_URL}/api/penjumboan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;  
                 break;
             case 'pemuatan':
                 endpoint = `${API_URL}/api/pemuatan/dashboard/${unitId}/${selectedYear}/${selectedMonth}`;
@@ -114,7 +115,8 @@ const MasterDashboard = () => {
         else return;
 
         try {
-            const res = await axios.get(`${API_URL}/api/${apiPath}/rilis/${selectedYear}`);
+            // PERBAIKAN: Tambahkan /api/
+            const res = await axios.get(`${API_URL}/api/${apiPath}/rilis/${selectedYear}`); // <--- PERBAIKAN
             setModulStates(prev => ({
                 ...prev,
                 [moduleKey]: { ...prev[moduleKey], data: { ...prev[moduleKey].data, rilisData: res.data } }
@@ -128,7 +130,10 @@ const MasterDashboard = () => {
     useEffect(() => {
         // Fetch data harian/bulanan untuk semua modul yang unitnya sudah dipilih
         Object.entries(modulStates).forEach(([key, moduleState]) => {
-            fetchModuleData(key, moduleState.unitId, moduleState.name);
+            // Hanya fetch jika unitId sudah terpilih
+            if (moduleState.unitId) {
+                fetchModuleData(key, moduleState.unitId, moduleState.name);
+            }
         });
         
         // Fetch data rilis (agregasi) untuk modul yang didukung
@@ -136,11 +141,12 @@ const MasterDashboard = () => {
         fetchRilisData('bks', 'BKS');
         fetchRilisData('packing', 'Packing Plant');
 
-
-    }, [selectedYear, selectedMonth]); 
+    // Tambahkan modulStates ke dependency array untuk memastikan fetchModuleData memiliki nilai unitId terbaru.
+    }, [selectedYear, selectedMonth, modulStates]); // <--- PERBAIKAN DEPENDENCY
 
     // --- RENDER HELPERS ---
     const handleUnitChange = (moduleKey, newUnitId) => {
+        // Ketika unit berubah, kita update state dan trigger useEffect
         setModulStates(prev => ({
             ...prev,
             [moduleKey]: { ...prev[moduleKey], unitId: newUnitId }
@@ -149,7 +155,7 @@ const MasterDashboard = () => {
 
     // FIX: getSelectedUnitName ditambahkan
     const getSelectedUnitName = (moduleKey) => {
-        const unitId = modulStates[moduleKey].unitId;
+        const unitId = modulStates[moduleKey]?.unitId;
         if (!unitId) return '';
         return allUnits.find(u => u.id_unit.toString() === unitId)?.nama_unit || '';
     };
@@ -239,9 +245,9 @@ const MasterDashboard = () => {
                         {/* Chart Rilis Pabrik (Selalu tampil jika data ada) */}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
-                                rilisData={modulStates.pabrik.data?.rilisData || []} 
-                                selectedYear={selectedYear} 
-                                groupName="Pabrik" 
+                                 rilisData={modulStates.pabrik.data?.rilisData || []} 
+                                 selectedYear={selectedYear} 
+                                 groupName="Pabrik" 
                              />
                          </div>
                     </div>
@@ -286,9 +292,9 @@ const MasterDashboard = () => {
                         )}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
-                                rilisData={modulStates.bks.data?.rilisData || []} 
-                                selectedYear={selectedYear} 
-                                groupName="BKS" 
+                                 rilisData={modulStates.bks.data?.rilisData || []} 
+                                 selectedYear={selectedYear} 
+                                 groupName="BKS" 
                              />
                          </div>
                     </div>
@@ -307,8 +313,8 @@ const MasterDashboard = () => {
                             allowedGroupName="Penjumboan" 
                         />
                          <span className="text-lg font-semibold text-gray-700">
-                             Total MTD: {formatProductionValue(modulStates.penjumboan.data?.totalProductionMTD)} TON
-                        </span>
+                              Total MTD: {formatProductionValue(modulStates.penjumboan.data?.totalProductionMTD)} TON
+                         </span>
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -339,8 +345,8 @@ const MasterDashboard = () => {
                             allowedGroupName="Pemuatan" 
                         />
                          <span className="text-lg font-semibold text-gray-700">
-                             Total MTD: {formatProductionValue(modulStates.pemuatan.data?.totalProductionMTD)} TON
-                        </span>
+                              Total MTD: {formatProductionValue(modulStates.pemuatan.data?.totalProductionMTD)} TON
+                         </span>
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -371,8 +377,8 @@ const MasterDashboard = () => {
                             allowedGroupName="Packing Plant" 
                         />
                          <span className="text-lg font-semibold text-gray-700">
-                             Total MTD: {formatProductionValue(modulStates.packing.data?.totalProductionMTD)} TON
-                        </span>
+                              Total MTD: {formatProductionValue(modulStates.packing.data?.totalProductionMTD)} TON
+                         </span>
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -390,13 +396,13 @@ const MasterDashboard = () => {
                             </>
                         )}
                          {/* Chart Rilis Packing Plant (Selalu tampil) */}
-                         <div className="lg:col-span-3 mt-4">
-                             <RilisPackingPlantChart 
-                                rilisData={modulStates.packing.data?.rilisData || []} 
-                                selectedYear={selectedYear} 
-                                groupName="Packing Plant" 
-                             />
-                         </div>
+                          <div className="lg:col-span-3 mt-4">
+                              <RilisPackingPlantChart 
+                                  rilisData={modulStates.packing.data?.rilisData || []} 
+                                  selectedYear={selectedYear} 
+                                  groupName="Packing Plant" 
+                              />
+                          </div>
                     </div>
                 </div>
 
@@ -408,4 +414,3 @@ const MasterDashboard = () => {
 
 
 export default MasterDashboard;
-
