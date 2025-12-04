@@ -6,16 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 import UnitSelector from '../components/UnitSelector';
-import DailyChart from '../components/DailyChart';         
-import HambatanPieChart from '../components/HambatanPieChart'; 
-import MonthlyChart from '../components/MonthlyChart';     
+import DailyChart from '../components/DailyChart';       
+import HambatanPieChart from '../components/HambatanPieChart';  
+import MonthlyChart from '../components/MonthlyChart';      
 import RilisProduksiChart from '../components/RilisProduksiChart'; // Import Rilis Chart
 
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
 // Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS fetch(`${API_URL}/api`)
 
 const DashboardPage = ({ unitGroup }) => { 
     const today = new Date();
@@ -61,7 +61,8 @@ const DashboardPage = ({ unitGroup }) => {
     useEffect(() => {
         const fetchUnitsList = async () => {
             try {
-                const res = await axios.get(`${API_URL}/units`);
+                // Perbaikan: Tambahkan /api/ untuk rute units
+                const res = await axios.get(`${API_URL}/api/units`);
                 
                 let filteredUnits = res.data;
                 if (groupDisplay !== 'Global') {
@@ -82,12 +83,12 @@ const DashboardPage = ({ unitGroup }) => {
         if (groupDisplay === 'Global') return setRilisData([]);
         
         try {
-            // API path disinkronkan dengan unitGroup (pabrik/bks)
-            const res = await axios.get(`${API_URL}/produksi/${unitGroup}/rilis/${selectedYear}`);
+            // Perbaikan: Tambahkan /api/ untuk rute rilis
+            const res = await axios.get(`${API_URL}/api/produksi/${unitGroup}/rilis/${selectedYear}`); // <--- PERBAIKAN
             setRilisData(res.data);
         } catch (err) {
             console.error(`Gagal ambil data rilis ${groupDisplay}:`, err);
-            // setError(`Gagal memuat Rilis Data untuk ${groupDisplay}.`); // Komentar ini untuk mencegah error alert
+            // setError(`Gagal memuat Rilis Data untuk ${groupDisplay}.`); 
         }
     };
 
@@ -98,7 +99,8 @@ const DashboardPage = ({ unitGroup }) => {
             setIsLoading(true);
             setError(null);
             
-            axios.get(`${API_URL}/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
+            // Perbaikan: Tambahkan /api/ untuk rute dashboard
+            axios.get(`${API_URL}/api/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`) // <--- PERBAIKAN
                  .then(res => {
                      setDashboardData(res.data);
                      setIsLoading(false);
@@ -106,10 +108,10 @@ const DashboardPage = ({ unitGroup }) => {
                  .catch(err => {
                      console.error("Gagal mengambil data dashboard:", err);
                      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                          handleLogout();
-                          setError("Sesi kadaluarsa. Silakan login kembali.");
+                         handleLogout();
+                         setError("Sesi kadaluarsa. Silakan login kembali.");
                      } else {
-                          setError("Gagal memuat data dashboard. Cek log server.");
+                         setError("Gagal memuat data dashboard. Cek log server.");
                      }
                      setIsLoading(false);
                  });
@@ -207,7 +209,7 @@ const DashboardPage = ({ unitGroup }) => {
             
             {/* 2. AREA VISUALISASI CHART */}
             <div className="grid grid-cols-1 gap-6 mt-6">
-                 
+                
                 {/* 2A. CHART HARIAN, HAMBATAN, BULANAN (Hanya Tampil jika unit spesifik dipilih) */}
                 {selectedUnit && !isLoading && !error && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -234,15 +236,15 @@ const DashboardPage = ({ unitGroup }) => {
                 )}
                 
                 {/* 2B. CHART RILIS (Komparasi Semua Unit) - Tampil di bawah jika group spesifik (Pabrik/BKS) */}
-                 {groupDisplay !== 'Global' && (
-                     <div className="lg:col-span-1">
-                         <RilisProduksiChart 
+                {groupDisplay !== 'Global' && (
+                    <div className="lg:col-span-1">
+                        <RilisProduksiChart 
                             rilisData={rilisData} 
                             selectedYear={selectedYear} 
                             groupName={groupDisplay} 
-                         />
-                     </div>
-                 )}
+                        />
+                    </div>
+                )}
                 
             </div>
             
