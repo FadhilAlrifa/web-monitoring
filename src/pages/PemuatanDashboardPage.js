@@ -81,7 +81,7 @@ const PemuatanDashboardPage = () => {
             {/* ================= HEADER ================= */}
             <div className="mb-10">
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide">
-                Production Performance Center — {PAGE_GROUP_NAME}
+                Dashboard Kinerja Pemuatan
             </h1>
             <p className="text-gray-500 mt-1">
                 Sistem Monitoring Tonase Pemuatan Terintegrasi

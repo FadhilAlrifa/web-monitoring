@@ -148,7 +148,7 @@ const DashboardPage = ({ unitGroup }) => {
             
             <div className="flex justify-between items-end mb-6 border-b pb-2">
                 <h1 className="text-4xl font-extrabold text-gray-900">
-                    Dashboard Kinerja {groupDisplay}
+                    Dashboard Kinerja Produksi {groupDisplay}
                 </h1>
             </div>
 
