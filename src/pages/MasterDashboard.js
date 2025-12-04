@@ -233,7 +233,7 @@ const MasterDashboard = () => {
                 
                 {/* ==================================================================== */}
                 {/* MODUL 2: PRODUKSI BKS */}
-                {==================================================================== */}
+                {/* ==================================================================== */}
                 <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-green-500">
                     <h2 className="text-3xl font-bold mb-4 text-green-700">2. Produksi BKS</h2>
                     <div className="flex gap-4 mb-4 items-center">
