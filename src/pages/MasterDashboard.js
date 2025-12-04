@@ -44,7 +44,7 @@ const MasterDashboard = () => {
     const [modulStates, setModulStates] = useState({
         // PRODUKSI UMUM (LaporanHarian)
         pabrik:      { unitId: null, name: 'Pabrik', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
-        bks:         { unitId: null, name: 'Pelabuhan Biringkassi', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
+        bks:         { unitId: null, name: 'BKS', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
         // MODUL SPESIFIK
         penjumboan:  { unitId: null, name: 'Penjumboan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
         pemuatan:    { unitId: null, name: 'Pemuatan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
@@ -220,29 +220,7 @@ const MasterDashboard = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Produksi Harian & Hambatan */}
-                        {modulStates.pabrik.unitId && (
-                            <>
-                                <div className="lg:col-span-2">
-                                    <DailyChart 
-                                        dailyReport={modulStates.pabrik.data.dailyReport} 
-                                        unitGroup="pabrik"
-                                        unitName={getSelectedUnitName('pabrik')}
-                                    />
-                                </div>
-                                <div>
-                                    <HambatanPieChart 
-                                        hambatanSummary={modulStates.pabrik.data.hambatanSummary}
-                                        title={`Hambatan Pabrik ${monthNames[selectedMonth - 1]} ${selectedYear}`}
-                                    />
-                                </div>
-                                {/* Monthly Chart Pabrik */}
-                                <div className="lg:col-span-3">
-                                     <MonthlyChart monthlyReport={modulStates.pabrik.data.monthlyReport} />
-                                </div>
-                            </>
-                        )}
-                        {/* Chart Rilis Pabrik (Selalu tampil jika data ada) */}
+                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
                                  rilisData={modulStates.pabrik.data?.rilisData || []} 
@@ -255,7 +233,7 @@ const MasterDashboard = () => {
                 
                 {/* ==================================================================== */}
                 {/* MODUL 2: PRODUKSI BKS */}
-                {/* ==================================================================== */}
+                {==================================================================== */}
                 <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-green-500">
                     <h2 className="text-3xl font-bold mb-4 text-green-700">2. Produksi BKS</h2>
                     <div className="flex gap-4 mb-4 items-center">
@@ -270,26 +248,7 @@ const MasterDashboard = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {modulStates.bks.unitId && (
-                            <>
-                                <div className="lg:col-span-2">
-                                    <DailyChart 
-                                        dailyReport={modulStates.bks.data.dailyReport} 
-                                        unitGroup="bks"
-                                        unitName={getSelectedUnitName('bks')}
-                                    />
-                                </div>
-                                <div>
-                                    <HambatanPieChart 
-                                        hambatanSummary={modulStates.bks.data.hambatanSummary}
-                                        title={`Hambatan BKS ${monthNames[selectedMonth - 1]} ${selectedYear}`}
-                                    />
-                                </div>
-                                <div className="lg:col-span-3">
-                                     <MonthlyChart monthlyReport={modulStates.bks.data.monthlyReport} />
-                                </div>
-                            </>
-                        )}
+                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
                                  rilisData={modulStates.bks.data?.rilisData || []} 
@@ -317,19 +276,11 @@ const MasterDashboard = () => {
                          </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {modulStates.penjumboan.unitId && (
-                            <>
-                                <div>
-                                    <PenjumboanDailyChart 
-                                        dailyReport={modulStates.penjumboan.data.dailyReport} 
-                                    />
-                                </div>
-                                <div>
-                                    <MonthlyChart monthlyReport={modulStates.penjumboan.data.monthlyReport} />
-                                </div>
-                            </>
-                        )}
+                    {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                    <div className="mt-4">
+                        <p className="text-sm text-gray-500">
+                            *Data harian dan bulanan dipindahkan ke halaman dashboard Penjumboan untuk optimasi.*
+                        </p>
                     </div>
                 </div>
 
@@ -349,19 +300,11 @@ const MasterDashboard = () => {
                          </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {modulStates.pemuatan.unitId && (
-                            <>
-                                <div>
-                                    <PemuatanDailyChart 
-                                        dailyReport={modulStates.pemuatan.data.dailyReport} 
-                                    />
-                                </div>
-                                <div>
-                                    <MonthlyChart monthlyReport={modulStates.pemuatan.data.monthlyReport} />
-                                </div>
-                            </>
-                        )}
+                    {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                    <div className="mt-4">
+                        <p className="text-sm text-gray-500">
+                            *Data harian dan bulanan dipindahkan ke halaman dashboard Pemuatan untuk optimasi.*
+                        </p>
                     </div>
                 </div>
                 
@@ -382,19 +325,7 @@ const MasterDashboard = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {modulStates.packing.unitId && (
-                            <>
-                                <div className="lg:col-span-2">
-                                    <PackingPlantDailyChart 
-                                        dailyReport={modulStates.packing.data.dailyReport} 
-                                        unitName={getSelectedUnitName('packing')}
-                                    />
-                                </div>
-                                <div className="lg:col-span-1">
-                                    <PackingPlantMonthlyChart monthlyReport={modulStates.packing.data.monthlyReport} />
-                                </div>
-                            </>
-                        )}
+                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
                          {/* Chart Rilis Packing Plant (Selalu tampil) */}
                           <div className="lg:col-span-3 mt-4">
                               <RilisPackingPlantChart 
