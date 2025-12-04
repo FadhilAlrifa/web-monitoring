@@ -9,7 +9,7 @@ import UnitSelector from '../components/UnitSelector';
 import DailyChart from '../components/DailyChart';       
 import HambatanPieChart from '../components/HambatanPieChart';  
 import MonthlyChart from '../components/MonthlyChart';      
-import RilisProduksiChart from '../components/RilisProduksiChart'; // Import Rilis Chart
+import RilisProduksiChart from '../components/RilisProduksiChart'; 
 
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
@@ -49,7 +49,7 @@ const DashboardPage = ({ unitGroup }) => {
     const availableYears = [2025, 2024, 2023]; 
 
     // --- FUNGSI HELPER ---
-    const getGroupName = () => unitGroup === 'pabrik' ? 'Pabrik' : unitGroup === 'bks' ? 'BKS' : 'Global';
+    const getGroupName = () => unitGroup === 'pabrik' ? 'Pabrik' : unitGroup === 'bks' ? 'Pelabukan Biringkassi' : 'Global';
     const groupDisplay = getGroupName();
 
     const handleLogout = () => {
@@ -84,7 +84,7 @@ const DashboardPage = ({ unitGroup }) => {
         
         try {
             // Perbaikan: Tambahkan /api/ untuk rute rilis
-            const res = await axios.get(`${API_URL}/api/produksi/${unitGroup}/rilis/${selectedYear}`); // <--- PERBAIKAN
+            const res = await axios.get(`${API_URL}/api/produksi/${unitGroup}/rilis/${selectedYear}`); 
             setRilisData(res.data);
         } catch (err) {
             console.error(`Gagal ambil data rilis ${groupDisplay}:`, err);
@@ -100,7 +100,7 @@ const DashboardPage = ({ unitGroup }) => {
             setError(null);
             
             // Perbaikan: Tambahkan /api/ untuk rute dashboard
-            axios.get(`${API_URL}/api/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`) // <--- PERBAIKAN
+            axios.get(`${API_URL}/api/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`) 
                  .then(res => {
                      setDashboardData(res.data);
                      setIsLoading(false);
@@ -260,3 +260,4 @@ const DashboardPage = ({ unitGroup }) => {
 
 
 export default DashboardPage;
+
