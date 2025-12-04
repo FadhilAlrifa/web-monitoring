@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// Hapus: fetch(`${API_URL}/api`)
+
 const PAGE_GROUP_NAME = 'Penjumboan';
 const REPORT_API = 'penjumboan/laporan';
 
@@ -141,7 +141,8 @@ const PenjumboanCrudPage = () => {
     // --- FETCH DATA ---
     const fetchMasterData = async () => {
         try {
-            const unitsRes = await axios.get(`${API_URL}/units`);
+            // PERBAIKAN: Tambahkan /api/ untuk rute units
+            const unitsRes = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
 
             let filteredUnits = unitsRes.data.filter(unit => unit.group_name === PAGE_GROUP_NAME);
             setUnits(filteredUnits);
@@ -152,6 +153,9 @@ const PenjumboanCrudPage = () => {
         } catch (error) {
             console.error('Error fetching master data:', error);
             setError('Gagal memuat unit kerja.');
+        } finally {
+            // Set loading false di sini setelah fetch master data
+            setIsLoading(false);
         }
     };
 
@@ -159,7 +163,8 @@ const PenjumboanCrudPage = () => {
         if (!isAdmin) { setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/${REPORT_API}/all`);
+            // PERBAIKAN: Tambahkan /api/ untuk rute laporan/all
+            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); // <--- PERBAIKAN
             setLaporan(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -185,10 +190,12 @@ const PenjumboanCrudPage = () => {
 
         try {
             if (isEditMode) {
-                await axios.put(`${API_URL}/${REPORT_API}/${formData.id_laporan}`, formData);
+                // PERBAIKAN: Tambahkan /api/ untuk rute PUT
+                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, formData); // <--- PERBAIKAN
                 setSuccessMessage('Laporan diperbarui!');
             } else {
-                await axios.post(`${API_URL}/${REPORT_API}`, formData);
+                // PERBAIKAN: Tambahkan /api/ untuk rute POST
+                await axios.post(`${API_URL}/api/${REPORT_API}`, formData); // <--- PERBAIKAN
                 setSuccessMessage('Laporan ditambahkan!');
             }
 
@@ -207,7 +214,8 @@ const PenjumboanCrudPage = () => {
             setError(null);
             setSuccessMessage(null);
             try {
-                await axios.delete(`${API_URL}/${REPORT_API}/${id_laporan}`);
+                // PERBAIKAN: Tambahkan /api/ untuk rute delete
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`); // <--- PERBAIKAN
                 setSuccessMessage('Laporan berhasil dihapus.');
                 fetchLaporan();
             } catch (error) {
