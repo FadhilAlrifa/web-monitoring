@@ -49,7 +49,7 @@ const DashboardPage = ({ unitGroup }) => {
     const availableYears = [2025, 2024, 2023]; 
 
     // --- FUNGSI HELPER ---
-    const getGroupName = () => unitGroup === 'pabrik' ? 'Pabrik' : unitGroup === 'bks' ? 'Pelabukan Biringkassi' : 'Global';
+    const getGroupName = () => unitGroup === 'pabrik' ? 'Pabrik' : unitGroup === 'bks' ? 'Pelabuhan Biringkassi' : 'Global';
     const groupDisplay = getGroupName();
 
     const handleLogout = () => {
@@ -260,4 +260,5 @@ const DashboardPage = ({ unitGroup }) => {
 
 
 export default DashboardPage;
+
 
