@@ -14,8 +14,7 @@ import PemuatanMonthlyChart from '../components/PemuatanMonthlyChart';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS: fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Pemuatan'; 
 
 const PemuatanDashboardPage = () => {
@@ -50,7 +49,8 @@ const PemuatanDashboardPage = () => {
             setError(null);
             
             // Panggil API khusus Pemuatan
-            axios.get(`${API_URL}/pemuatan/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
+            // PERBAIKAN: Tambahkan /api/ di sini
+            axios.get(`${API_URL}/api/pemuatan/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
                  .then(res => {
                      setPemuatanData(res.data);
                      setIsLoading(false);
