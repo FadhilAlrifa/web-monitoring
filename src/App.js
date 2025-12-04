@@ -63,7 +63,7 @@ const AppLayout = () => {
 
                     {/* LEFT – Nama Sistem */}
                     <a href="/" className="text-xl font-bold tracking-wide bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-                        PT. Biringkassiraya | Dashboard Produksi
+                        PT. Biringkassi raya | Dashboard Produksi
                     </a>
 
                     {/* RIGHT – User + Info */}
