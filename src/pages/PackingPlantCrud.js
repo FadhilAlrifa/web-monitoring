@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// Hapus: fetch(`${API_URL}/api`)
+
 const PAGE_GROUP_NAME = 'Packing Plant'; 
 const REPORT_API = 'packing-plant/laporan';
 
@@ -138,7 +138,8 @@ const PackingPlantCrud = () => {
     // --- FETCH DATA ---
     const fetchMasterData = async () => {
         try {
-            const unitsRes = await axios.get(`${API_URL}/units`);
+            // PERBAIKAN: Tambahkan /api/
+            const unitsRes = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
             
             let filteredUnits = unitsRes.data.filter(unit => unit.group_name === PAGE_GROUP_NAME);
             setUnits(filteredUnits); 
@@ -156,7 +157,8 @@ const PackingPlantCrud = () => {
         if (!isAdmin) { setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/${REPORT_API}/all`); 
+            // PERBAIKAN: Tambahkan /api/
+            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); // <--- PERBAIKAN
             setLaporan(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -187,25 +189,25 @@ const PackingPlantCrud = () => {
             id_unit: formData.id_unit,
             id_laporan: formData.id_laporan,
             
-            // Kolom Numerik (9 field) - DIPASTIKAN FLOAT ATAU 0
-            produksi_ton: parseFloat(formData.produksi_ton) || 0,
-            jam_operasi: parseFloat(formData.jam_operasi) || 0,
-            h_proses: parseFloat(formData.h_proses) || 0,
-            h_listrik: parseFloat(formData.h_listrik) || 0,
-            h_mekanik: parseFloat(formData.h_mekanik) || 0,
-            h_operator: parseFloat(formData.h_operator) || 0,
-            h_hujan: parseFloat(formData.h_hujan) || 0,
-            h_kapal: parseFloat(formData.h_kapal) || 0,
-            h_pmc: parseFloat(formData.h_pmc) || 0,
+            // Kolom Numerik
+            ton_muat: parseFloat(formData.ton_muat) || 0,
+            target: parseFloat(formData.target) || 0,
+            target_rkp: parseFloat(formData.target_rkp) || 0,
+            
+            // Kolom yang dihapus (hambatan, produksi_ton, jam_operasi) karena tidak ada di form ini
+            // Tambahkan kembali jika skema DB membutuhkannya dengan nilai 0
+            
         };
 
         try {
             if (isEditMode) { 
-                await axios.put(`${API_URL}/${REPORT_API}/${formData.id_laporan}`, dataToSend); 
+                // PERBAIKAN: Tambahkan /api/
+                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, dataToSend); // <--- PERBAIKAN
                 setSuccessMessage('Laporan berhasil diperbarui!');
             } 
             else { 
-                await axios.post(`${API_URL}/${REPORT_API}`, dataToSend); 
+                // PERBAIKAN: Tambahkan /api/
+                await axios.post(`${API_URL}/api/${REPORT_API}`, dataToSend); // <--- PERBAIKAN
                 setSuccessMessage('Laporan berhasil ditambahkan!');
             }
             
@@ -224,7 +226,8 @@ const PackingPlantCrud = () => {
             setError(null);
             setSuccessMessage(null);
             try {
-                await axios.delete(`${API_URL}/${REPORT_API}/${id_laporan}`);
+                // PERBAIKAN: Tambahkan /api/
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`); // <--- PERBAIKAN
                 setSuccessMessage('Laporan berhasil dihapus.');
                 fetchLaporan();
             } catch (error) {
@@ -301,7 +304,7 @@ const PackingPlantCrud = () => {
                     
                     {/* BAGIAN TARGET RKAP BULANAN */}
                     <div className="grid grid-cols-1 md:w-1/4 gap-4 mb-6">
-                         {renderInput('target_rkp', 'Target RKAP Bulanan (Ton)', 'number', '1')}
+                        {renderInput('target_rkp', 'Target RKAP Bulanan (Ton)', 'number', '1')}
                     </div>
 
                     {/* TOTAL PRODUKSI OTOMATIS */}
@@ -433,4 +436,3 @@ const PackingPlantCrud = () => {
 
 
 export default PackingPlantCrud;
-
