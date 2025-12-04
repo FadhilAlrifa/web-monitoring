@@ -14,8 +14,7 @@ import RilisPackingPlantChart from '../components/RilisPackingPlantChart';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS: fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Packing Plant'; 
 
 const PackingPlantDashboard = () => {
@@ -43,14 +42,15 @@ const PackingPlantDashboard = () => {
     const [allowedUnitsList, setAllowedUnitsList] = useState([]); // Untuk lookup nama unit
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", 
-                        "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                         "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const availableYears = [2025, 2024, 2023]; 
 
     // --- FETCH MASTER DATA (Untuk lookup nama unit) ---
     useEffect(() => {
         const fetchUnitsList = async () => {
             try {
-                const res = await axios.get(`${API_URL}/units`);
+                // PERBAIKAN: Tambahkan /api/
+                const res = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
                 const filteredUnits = res.data.filter(unit => unit.group_name === PAGE_GROUP_NAME);
                 setAllowedUnitsList(filteredUnits);
             } catch (err) {
@@ -70,7 +70,8 @@ const PackingPlantDashboard = () => {
         setIsLoading(true);
         setError(null);
         
-        axios.get(`${API_URL}/packing-plant/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`)
+        // PERBAIKAN: Tambahkan /api/
+        axios.get(`${API_URL}/api/packing-plant/dashboard/${selectedUnit}/${selectedYear}/${selectedMonth}`) // <--- PERBAIKAN
              .then(res => {
                  setPpData(res.data);
                  setIsLoading(false);
@@ -87,7 +88,8 @@ const PackingPlantDashboard = () => {
         if (!selectedYear) return;
         
         try {
-            const res = await axios.get(`${API_URL}/packing-plant/rilis/${selectedYear}`);
+            // PERBAIKAN: Tambahkan /api/
+            const res = await axios.get(`${API_URL}/api/packing-plant/rilis/${selectedYear}`); // <--- PERBAIKAN
             setRilisData(res.data);
         } catch (err) {
             console.error("Gagal ambil data rilis:", err);
@@ -180,7 +182,7 @@ const PackingPlantDashboard = () => {
             
             {/* 2. AREA VISUALISASI CHART (Layout 3-Row Stacked) */}
             <div className="grid grid-cols-1 gap-6 mt-6">
-                 
+                
                 {/* ROW 1: CHART HARIAN (Per Unit) */}
                 {selectedUnit && !isLoading && !error && (
                     <div className="lg:col-span-1">
@@ -199,14 +201,14 @@ const PackingPlantDashboard = () => {
                 )}
                 
                 {/* ROW 3: CHART RILIS (Komparasi Semua Unit) - Di posisi paling bawah */}
-                 {selectedYear && (
-                     <div className="lg:col-span-1">
+                {selectedYear && (
+                    <div className="lg:col-span-1">
                          <RilisPackingPlantChart 
                             rilisData={rilisData} 
                             selectedYear={selectedYear} 
-                         />
-                     </div>
-                 )}
+                        />
+                    </div>
+                )}
                 
             </div>
             
