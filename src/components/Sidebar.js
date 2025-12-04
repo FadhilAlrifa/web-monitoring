@@ -82,6 +82,7 @@ export default function Sidebar() {
     const activeParent = (item) => item.children?.some(c => location.pathname.startsWith(c.path));
 
     const handleNavLinkClick = (name) => {
+        // Otomatis tutup sidebar di mobile setelah klik NavLink
         if (window.innerWidth < 768) { 
             setIsOpen(false);
         }
@@ -109,15 +110,17 @@ export default function Sidebar() {
             {/* Sidebar Container */}
             <div className={`
                 w-64 bg-white/90 backdrop-blur-md border-r border-gray-200 shadow-xl flex flex-col 
-                fixed inset-y-0 left-0 z-50 h-screen 
+                fixed inset-y-0 left-0 z-50 // Mobile positioning
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-                md:static md:translate-x-0 md:flex
+                
+                // DESKTOP FIX: fixed, dimulai di bawah header (top-[57px]), hitung tinggi sisa layar
+                md:fixed md:top-[57px] md:h-[calc(100vh-57px)] md:translate-x-0 md:flex
             `}>
                 
-                {/* Header */}
+                {/* Header (Di sini hanya header internal sidebar, bukan header App) */}
                 <div className="px-6 py-5 border-b bg-white/80 backdrop-blur-xl shadow-sm">
-                    <h1 className="text-xl font-bold text-blue-700">Navigation Panel</h1>
+                    <h1 className="text-xl font-bold text-blue-700">Biringkassiraya Ops</h1>
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto"> {/* Scroll diterapkan di nav */}
