@@ -298,20 +298,30 @@ const CrudPage = ({ unitGroup }) => {
             {successMessage && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">{successMessage}</div>}
             {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">{error}</div>}
             {/* FORM */}
-            <div className="bg-white p-6 rounded shadow-md mb-10">
-                <form onSubmit={handleSubmit}>
+            <div className="bg-white p-8 rounded-2xl shadow-xl mb-10 border">
+                <form onSubmit={handleSubmit} className="space-y-8">
 
-                    {/* HEADER */}
-                    <div className="grid md:grid-cols-4 gap-4 mb-6">
-                        {renderInput("Tanggal", "tanggal", "date", null, isEditMode)}
+                    {/* ==== HEADER FORM ==== */}
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4">
+                        <h2 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? "✏️ Edit Laporan Produksi" : "➕ Input Produksi Harian"}
+                        </h2>
+                        <span className="px-4 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
+                            {allowedGroupName || "Global"}
+                        </span>
+                    </div>
+
+                    {/* ==== HEADER INPUT UTAMA ==== */}
+                    <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6">
+                        {renderInput("Tanggal Produksi", "tanggal", "date", null, isEditMode)}
 
                         <div className="flex flex-col">
-                            <label className="text-sm mb-1">Unit Kerja</label>
+                            <label className="text-sm mb-1 font-medium">Unit Kerja</label>
                             <select 
                                 name="id_unit"
                                 value={formData.id_unit}
                                 onChange={handleChange}
-                                className="p-2 border rounded"
+                                className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 disabled={isEditMode}
                             >
                                 <option value="">-- Pilih Unit --</option>
@@ -324,51 +334,65 @@ const CrudPage = ({ unitGroup }) => {
                         {renderInput("Jam Operasi", "jam_operasi")}
                     </div>
 
-                    {/* PRODUKSI SHIFT */}
-                    <h3 className="font-bold text-lg text-blue-600 mb-3">Produksi per Shift (TON)</h3>
-
-                    <div className="grid md:grid-cols-3 gap-4 mb-4">
-                        {renderInput("Produksi Shift 1", "produksi_s1")}
-                        {renderInput("Produksi Shift 2", "produksi_s2")}
-                        {renderInput("Produksi Shift 3", "produksi_s3")}
+                    {/* ==== PRODUKSI PER SHIFT ==== */}
+                    <div>
+                        <h3 className="font-bold text-lg text-blue-700 mb-3">Produksi per Shift (TON)</h3>
+                        <div className="grid md:grid-cols-3 gap-5">
+                            {renderInput("Shift 1", "produksi_s1")}
+                            {renderInput("Shift 2", "produksi_s2")}
+                            {renderInput("Shift 3", "produksi_s3")}
+                        </div>
                     </div>
 
-                    {/* TOTAL PRODUKSI */}
-                    <div className="p-4 bg-gray-100 border-l-4 border-green-600 mb-6">
-                        <p className="font-semibold">Total Produksi Hari Ini:</p>
-                        <p className="text-xl font-bold text-green-800">{totalProduksi.toFixed(2)} TON</p>
+                    {/* ==== TOTAL PRODUKSI CARD ==== */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="bg-gradient-to-br from-green-600 to-emerald-500 text-white p-6 rounded-xl shadow-lg">
+                            <p className="text-sm uppercase opacity-90">Total Produksi Hari Ini</p>
+                            <p className="text-3xl font-extrabold mt-2">{totalProduksi.toFixed(2)} TON</p>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-6 rounded-xl shadow-lg">
+                            <p className="text-sm uppercase opacity-90">Total Jam Hambatan</p>
+                            <p className="text-3xl font-extrabold mt-2">{totalHambatan.toFixed(2)} Jam</p>
+                        </div>
                     </div>
 
-                    {/* HAMBATAN */}
-                    <h3 className="font-bold text-lg text-blue-600 mb-3">Jam Hambatan</h3>
-
-                    <div className="grid md:grid-cols-7 gap-4 mb-4">
-                        {renderInput("Proses", "h_proses")}
-                        {renderInput("Listrik", "h_listrik")}
-                        {renderInput("Mekanik", "h_mekanik")}
-                        {renderInput("Operator", "h_operator")}
-                        {renderInput("Hujan", "h_hujan")}
-                        {renderInput("Kapal", "h_kapal")}
-                        {renderInput("PMC", "h_pmc")}
+                    {/* ==== INPUT HAMBATAN ==== */}
+                    <div>
+                        <h3 className="font-bold text-lg text-blue-700 mb-3">Jam Hambatan</h3>
+                        <div className="grid lg:grid-cols-7 md:grid-cols-3 gap-4">
+                            {renderInput("Proses", "h_proses")}
+                            {renderInput("Listrik", "h_listrik")}
+                            {renderInput("Mekanik", "h_mekanik")}
+                            {renderInput("Operator", "h_operator")}
+                            {renderInput("Hujan", "h_hujan")}
+                            {renderInput("Kapal", "h_kapal")}
+                            {renderInput("PMC", "h_pmc")}
+                        </div>
                     </div>
 
-                    <div className="flex justify-end gap-3">
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                            {isEditMode ? "Perbarui Data" : "Tambah Laporan"}
+                    {/* ==== TOMBOL SUBMIT ==== */}
+                    <div className="flex justify-end gap-4 pt-4 border-t">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition"
+                        >
+                            {isEditMode ? "💾 Perbarui Data" : "✅ Simpan Laporan"}
                         </button>
 
                         {isEditMode && (
                             <button 
                                 type="button" 
                                 onClick={() => { setIsEditMode(false); setFormData(initialFormData); }}
-                                className="bg-gray-300 px-6 py-2 rounded"
+                                className="bg-gray-300 hover:bg-gray-400 px-8 py-3 rounded-xl font-semibold transition"
                             >
-                                Batal
+                                ❌ Batal
                             </button>
                         )}
                     </div>
+
                 </form>
-            </div>
+                </div>
 
             {/* TABEL LISTING */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
