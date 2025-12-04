@@ -1,187 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Factory, PackagePlus, Ship, PackageSearch, Calendar, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+    LayoutDashboard,
+    Factory,
+    PackagePlus,
+    Ship,
+    PackageSearch,
+    Menu,
+    X
+} from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL;
+const navItems = [
+    { 
+        name: "Dashboard",
+        icon: <LayoutDashboard size={18} />, 
+        path: "/master", 
+        type: "link" 
+    },
 
-const today = new Date();
-const monthNames = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    { 
+        name: "Produksi",
+        icon: <Factory size={18} />,
+        type: "dropdown",
+        children: [
+            { name: "Produksi Pabrik", path: "/produksi/pabrik", group: "Pabrik" },
+            { name: "Input Pabrik", path: "/input/pabrik", group: "Pabrik" },
+            { name: "Produksi Pelabuhan", path: "/produksi/bks", group: "BKS" },
+            { name: "Input Pelabuhan", path: "/input/bks", group: "BKS" }
+        ]
+    },
+
+    { 
+        name: "Penjumboan",
+        icon: <PackagePlus size={18} />,
+        type: "dropdown",
+        children: [
+            { name: "Dashboard Polysling", path: "/penjumboan", group: "Penjumboan" },
+            { name: "Input Penjumboan", path: "/input/penjumboan", group: "Penjumboan" }
+        ]
+    },
+
+    { 
+        name: "Pemuatan",
+        icon: <Ship size={18} />,
+        type: "dropdown",
+        children: [
+            { name: "Dashboard Pemuatan", path: "/pemuatan", group: "Pemuatan" },
+            { name: "Input Pemuatan", path: "/input/pemuatan", group: "Pemuatan" }
+        ]
+    },
+
+    { 
+        name: "Packing Plant",
+        icon: <PackageSearch size={18} />,
+        type: "dropdown",
+        children: [
+            { name: "Dashboard Packing Plant", path: "/packing-plant/dashboard", group: "Packing Plant" },
+            { name: "Input Packing Plant", path: "/input/packing-plant", group: "Packing Plant" }
+        ]
+    }
 ];
 
-// Data untuk kartu navigasi
-const moduleCards = [
-    { title: "Produksi Pabrik", icon: Factory, path: "/produksi/pabrik", color: "text-red-500", group: "Pabrik" },
-    { title: "Produksi Pelabuhan (BKS)", icon: Factory, path: "/produksi/bks", color: "text-green-500", group: "BKS" },
-    { title: "Penjumboan", icon: PackagePlus, path: "/penjumboan", color: "text-blue-500", group: "Penjumboan" },
-    { title: "Pemuatan", icon: Ship, path: "/pemuatan", color: "text-yellow-600", group: "Pemuatan" },
-    { title: "Packing Plant", icon: PackageSearch, path: "/packing-plant/dashboard", color: "text-indigo-500", group: "Packing Plant" },
-];
+export default function Sidebar() {
+    const [openMenu, setOpenMenu] = useState(null);
+    const [isOpen, setIsOpen] = useState(false); // State untuk toggle mobile
+    const location = useLocation();
+    const { user } = useAuth();
 
-
-const MasterDashboard = () => {
-    const [summary, setSummary] = useState({
-        totalProductionMTD: 124578, // Mock default for design preview
-        totalHambatanMTD: 580,      // Mock default for design preview
-        totalTargetMTD: 150000,     // Mock default for design preview
-    });
-    const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
-    const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-    const [isLoading, setIsLoading] = useState(false); // Set default to false for better UI preview
-    const navigate = useNavigate();
-    
-    const availableYears = [2025, 2024, 2023]; 
-
-    // --- FETCH RINGKASAN GLOBAL MTD (Optimasi) ---
-    useEffect(() => {
-        const fetchGlobalSummary = async () => {
-            setIsLoading(true);
-            try {
-                // Endpoint ini diasumsikan dibuat di backend untuk mengambil total MTD global
-                const endpoint = `${API_URL}/api/global-summary/${selectedYear}/${selectedMonth}`;
-                
-                // Catatan: Jika endpoint ini belum tersedia di backend, ini akan gagal.
-                // Anda perlu membuat endpoint ini di server.js yang hanya menjalankan SUM.
-                const res = await axios.get(endpoint);
-
-                setSummary(res.data);
-            } catch (err) {
-                console.error("Gagal fetch global summary. Pastikan endpoint /api/global-summary sudah dibuat:", err);
-                // Fallback data agar tampilan tidak kosong saat API error
-                setSummary({ totalProductionMTD: 0, totalHambatanMTD: 0, totalTargetMTD: 0 });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchGlobalSummary();
-    }, [selectedYear, selectedMonth]);
-
-    // --- RENDER HELPERS ---
-    const formatValue = (value) => {
-        if (value === 'N/A') return value;
-        const numericValue = parseFloat(value);
-        return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const canShowInput = (groupName) => {
+        if (!user) return false;
+        if (["superuser", "admin"].includes(user.role)) return true;
+        if (user.role === "entry_admin") {
+            const allowed = user.allowed_groups?.split(',').map(g => g.trim());
+            return allowed?.includes(groupName);
+        }
+        return false;
     };
 
-    const monthDisplay = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
-    const progressPercent = summary.totalTargetMTD > 0 
-        ? Math.min(100, (summary.totalProductionMTD / summary.totalTargetMTD) * 100).toFixed(1) 
-        : 0;
-    
-    // --- RENDERING UTAMA ---
+    const toggleMenu = (name) => setOpenMenu(openMenu === name ? null : name);
+    const activeParent = (item) => item.children?.some(c => location.pathname.startsWith(c.path));
+
+    const handleNavLinkClick = (name) => {
+        // Otomatis tutup sidebar di mobile setelah klik NavLink
+        if (window.innerWidth < 768) { 
+            setIsOpen(false);
+        }
+    };
+
+
     return (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
-                Dashboard Kinerja Operasi
-            </h1>
-            <p className="text-gray-500 mb-8">Ringkasan Performa Bulanan PT. Biringkassi Raya</p>
+        <>
+            {/* Mobile Menu Button - Fixed on small screens */}
+            <button 
+                className="fixed top-4 left-4 z-[60] md:hidden p-2 bg-blue-600 text-white rounded-full shadow-xl transition hover:bg-blue-700"
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
 
-            {/* Global Filters & Time Display */}
-            <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-purple-600/70 mb-10">
-                <div className="flex flex-wrap gap-4 items-center">
-                    
-                    {/* Display Bulan Aktif */}
-                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <Calendar size={18} className="text-purple-600" />
-                        <span className="mr-2">Periode Aktif:</span>
-                    </div>
-
-                    {/* Selector Bulan */}
-                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:shadow-md">
-                        {monthNames.map((name, index) => (<option key={index + 1} value={index + 1}>{name}</option>))}
-                    </select>
-                    
-                    {/* Selector Tahun */}
-                    <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:shadow-md">
-                        {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
-                    </select>
-                    
-                    <span className="text-gray-500 text-sm ml-auto">{monthDisplay}</span>
-                </div>
-            </div>
-            
-            {/* === KARTU RINGKASAN GLOBAL === */}
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">Performa MTD Keseluruhan</h3>
-            
-            {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10 animate-pulse">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-white p-6 rounded-xl shadow-lg h-32 border-l-4 border-gray-300"></div>
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-                    
-                    {/* Total Produksi MTD */}
-                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-blue-500/70 transform hover:scale-[1.02] transition duration-300">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Total Produksi MTD</p>
-                        <h2 className="text-4xl font-extrabold text-blue-800 mt-2">
-                            {formatValue(summary.totalProductionMTD)}
-                            <span className="text-xl font-semibold text-blue-600 ml-1">TON</span>
-                        </h2>
-                        <div className="mt-2 text-xs text-gray-500">Target: {formatValue(summary.totalTargetMTD)} TON</div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-                            <div className="h-2.5 rounded-full bg-blue-500" style={{ width: `${progressPercent}%` }}></div>
-                        </div>
-                        <p className="text-xs mt-1 font-semibold" style={{ color: `hsl(${progressPercent > 80 ? '120' : progressPercent > 50 ? '45' : '0'}, 80%, 40%)` }}>
-                            {progressPercent}% dari Target
-                        </p>
-                    </div>
-
-                    {/* Total Jam Hambatan MTD */}
-                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-red-500/70 transform hover:scale-[1.02] transition duration-300">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><Clock size={16} /> Total Jam Hambatan</p>
-                        <h2 className="text-4xl font-extrabold text-red-800 mt-2">
-                            {formatValue(summary.totalHambatanMTD)}
-                            <span className="text-xl font-semibold text-red-600 ml-1">JAM</span>
-                        </h2>
-                        <p className="text-sm text-gray-400 mt-1">Akumulasi waktu henti operasional.</p>
-                    </div>
-                    
-                    {/* Efisiensi Keseluruhan */}
-                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-purple-500/70 transform hover:scale-[1.02] transition duration-300">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Efisiensi Total</p>
-                        <h2 className="text-4xl font-extrabold text-purple-800 mt-2">
-                            {progressPercent}%
-                            <span className="text-xl font-semibold text-purple-600 ml-1">EFISIENSI</span>
-                        </h2>
-                        <p className="text-sm text-gray-400 mt-1">Produksi vs. Target (Ringkasan KPI).</p>
-                    </div>
-
-                </div>
+            {/* Backdrop - Only visible on mobile when open */}
+            {isOpen && (
+                <div 
+                    className="fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity" 
+                    onClick={() => setIsOpen(false)} 
+                />
             )}
 
+            {/* Sidebar Container */}
+            <div className={`
+                w-64 bg-white/90 backdrop-blur-md border-r border-gray-200 shadow-xl flex flex-col 
+                fixed inset-y-0 left-0 z-50 // Mobile positioning
+                transform transition-transform duration-300 ease-in-out
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                
+                // DESKTOP FIX: fixed, dimulai di bawah header (top-[57px]), hitung tinggi sisa layar
+                md:fixed md:top-[57px] md:h-[calc(100vh-57px)] md:translate-x-0 md:flex
+            `}>
+                
+                {/* Header (Di sini hanya header internal sidebar, bukan header App) */}
+                <div className="px-6 py-5 border-b bg-white/80 backdrop-blur-xl shadow-sm">
+                    <h1 className="text-lg font-semibold text-gray-900">Navigation Panel</h1>
+                </div>
 
-            {/* === KARTU NAVIGASI MODUL === */}
-            <h3 className="text-xl font-semibold text-gray-700 mb-4 border-t pt-6">Akses Dashboard Spesifik</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {moduleCards.map(card => {
-                    const Icon = card.icon;
-                    return (
-                        <button 
-                            key={card.title}
-                            onClick={() => navigate(card.path)}
-                            className={`bg-white p-6 rounded-xl shadow-xl transition duration-300 hover:shadow-2xl transform hover:-translate-y-0.5 text-left border-l-4 ${card.color.replace('text-', 'border-')}`}
-                        >
-                            <div className="flex items-center space-x-4">
-                                <Icon size={28} className={card.color} />
-                                <h2 className="text-xl font-bold text-gray-800">{card.title}</h2>
+                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto"> {/* Scroll diterapkan di nav */}
+
+                    {navItems.map(item => {
+                        const active = activeParent(item);
+
+                        return (
+                            <div key={item.name}>
+                                
+                                {/* === DROPDOWN ITEM === */}
+                                {item.type === "dropdown" ? (
+                                    <>
+                                        <button 
+                                            onClick={() => toggleMenu(item.name)}
+                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
+                                                     ${active ? "bg-blue-600 text-white shadow-lg" : "hover:bg-gray-100 text-gray-700"}`}>
+                                            <span className="text-lg">{item.icon}</span>
+                                            <span>{item.name}</span>
+                                            <span className="ml-auto opacity-70">{openMenu === item.name ? "▲" : "▼"}</span>
+                                        </button>
+
+                                        {/* Dropdown content */}
+                                        {openMenu === item.name && (
+                                            <div className="pl-8 py-2 space-y-1">
+                                                {item.children?.map(sub => {
+                                                    const isInput = sub.path.includes("/input");
+                                                    if (isInput && !canShowInput(sub.group)) return null;
+
+                                                    return (
+                                                        <NavLink
+                                                            key={sub.name}
+                                                            to={sub.path}
+                                                            onClick={() => handleNavLinkClick(sub.name)}
+                                                            className={({ isActive }) =>
+                                                                `block px-3 py-2 rounded-lg text-sm transition 
+                                                                ${isActive ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50"}`
+                                                            }
+                                                        >
+                                                            • {sub.name}
+                                                        </NavLink>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    /* === SINGLE ITEM === */
+                                    <NavLink
+                                        to={item.path}
+                                        end
+                                        onClick={() => handleNavLinkClick(item.name)}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
+                                            ${isActive ? "bg-blue-600 text-white shadow-lg" : "hover:bg-gray-100 text-gray-700"}`
+                                        }
+                                    >
+                                        <span className="text-xl">{item.icon}</span>
+                                        {item.name}
+                                    </NavLink>
+                                )}
                             </div>
-                            <p className="text-sm text-gray-500 mt-3">
-                                Analisis data harian, bulanan, dan grafik per unit.
-                            </p>
-                        </button>
-                    );
-                })}
+                        );
+                    })}
+                </nav>
             </div>
-            
-        </div>
+        </>
     );
-};
-
-
-export default MasterDashboard;
+}
