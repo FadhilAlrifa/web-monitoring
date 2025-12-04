@@ -5,8 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS PANGGILAN REDUNDAN: fetch(`${API_URL}/api`)
 const REPORT_API = 'laporan'; 
 
 // --- STATE AWAL ---
@@ -194,6 +193,7 @@ const CrudPage = ({ unitGroup }) => {
     };
 
     const handleDelete = async (id_laporan) => {
+        // PERBAIKAN: Gunakan modal kustom atau konfirmasi yang lebih baik jika alert() tidak diizinkan
         if (window.confirm('Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.')) {
             setError(null);
             setSuccessMessage(null);
@@ -248,16 +248,24 @@ const CrudPage = ({ unitGroup }) => {
                 await axios.post(`${API_URL}/api/${REPORT_API}`, dataToSend);
             }
 
-            // window.alert("Laporan berhasil disimpan!"); // ⬅️ ALERT BERHASIL
             setSuccessMessage('Laporan berhasil disimpan!');
             setFormData(initialFormData);
             setIsEditMode(false);
             fetchLaporan();
 
         } catch (error) {
-            console.error(error);
-            // window.alert("Gagal menyimpan laporan!"); // ⬅️ ALERT GAGAL
-            setError('Gagal menyimpan laporan.');
+            console.error('Error submitting report:', error.response?.data);
+            
+            // PERBAIKAN UTAMA: Ambil pesan spesifik dari backend (status 409 Conflict)
+            const specificErrorMessage = error.response?.data?.message;
+
+            if (specificErrorMessage) {
+                // Gunakan pesan spesifik (misalnya: "Gagal: Laporan Produksi untuk tanggal dan unit ini sudah ada.")
+                setError(specificErrorMessage);
+            } else {
+                // Fallback ke pesan generik (untuk error 500, network error, dll.)
+                setError('Gagal menyimpan laporan. Terjadi kesalahan server atau koneksi terputus.');
+            }
         }
     };
 
@@ -434,8 +442,8 @@ const CrudPage = ({ unitGroup }) => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{parseFloat(l.jam_operasi).toFixed(2)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-semibold">{parseFloat(l.total_hambatan).toFixed(2)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                                            <button onClick={() => handleEdit(l)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
-                                            <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                            <button onClick={() => handleEdit(l)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
+                                            <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -449,6 +457,3 @@ const CrudPage = ({ unitGroup }) => {
 };
 
 export default CrudPage;
-
-
-
