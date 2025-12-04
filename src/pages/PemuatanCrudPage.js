@@ -5,8 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Panggilan API di frontend:
-fetch(`${API_URL}/api`)
+// HAPUS: fetch(`${API_URL}/api`)
 const PAGE_GROUP_NAME = 'Pemuatan';
 const REPORT_API = 'pemuatan/laporan';
 
@@ -16,7 +15,7 @@ const initialFormData = {
     ton_muat: 0,
     target: 2000,
     id_laporan: null,
-    // Note: jam_muat tidak ada di form state, akan diinjeksi 0 saat submit
+    // jam_muat akan diinjeksi 0 saat submit jika tidak ada di form
 };
 
 const PemuatanCrudPage = () => {
@@ -133,7 +132,8 @@ const PemuatanCrudPage = () => {
     // --- FETCH DATA ---
     const fetchMasterData = async () => {
         try {
-            const unitsRes = await axios.get(`${API_URL}/units`);
+            // PERBAIKAN: Tambahkan /api/ untuk rute units
+            const unitsRes = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
 
             let filteredUnits = unitsRes.data.filter(unit => unit.group_name === PAGE_GROUP_NAME);
             setUnits(filteredUnits);
@@ -144,6 +144,8 @@ const PemuatanCrudPage = () => {
         } catch (error) {
             console.error('Error fetching master data:', error);
             setError('Gagal memuat unit kerja.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -151,7 +153,8 @@ const PemuatanCrudPage = () => {
         if (!isAdmin) { setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/${REPORT_API}/all`);
+            // PERBAIKAN: Tambahkan /api/ untuk rute laporan/all
+            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); // <--- PERBAIKAN
             setLaporan(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -185,10 +188,12 @@ const PemuatanCrudPage = () => {
 
         try {
             if (isEditMode) {
-                await axios.put(`${API_URL}/${REPORT_API}/${formData.id_laporan}`, payload);
+                // PERBAIKAN: Tambahkan /api/ untuk rute PUT
+                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, payload);
                 setSuccessMessage('Laporan diperbarui!');
             } else {
-                await axios.post(`${API_URL}/${REPORT_API}`, payload);
+                // PERBAIKAN: Tambahkan /api/ untuk rute POST
+                await axios.post(`${API_URL}/api/${REPORT_API}`, payload);
                 setSuccessMessage('Laporan ditambahkan!');
             }
 
@@ -207,7 +212,8 @@ const PemuatanCrudPage = () => {
             setError(null);
             setSuccessMessage(null);
             try {
-                await axios.delete(`${API_URL}/${REPORT_API}/${id_laporan}`);
+                // PERBAIKAN: Tambahkan /api/ untuk rute delete
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`);
                 setSuccessMessage('Laporan berhasil dihapus.');
                 fetchLaporan();
             } catch (error) {
@@ -390,8 +396,10 @@ const PemuatanCrudPage = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
                                                 {parseFloat(item.jam_muat).toFixed(2)}
                                             </td>
-                                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-center ${tonMuat >= target ? 'text-green-600' : 'text-red-600'}`}>
-                                                {tonMuat.toFixed(0)}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                                                <span className={`font-bold ${tonMuat >= target ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {tonMuat.toFixed(0)}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                 <div className="flex space-x-2 justify-center">
