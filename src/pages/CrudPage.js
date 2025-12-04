@@ -167,7 +167,7 @@ const CrudPage = ({ unitGroup }) => {
     // FETCH
     const fetchMasterData = async () => {
         try {
-            const unitsRes = await axios.get(`${API_URL}/units`);
+            const unitsRes = await axios.get(`${API_URL}/api/units`);
             let filteredUnits = unitsRes.data;
             if (allowedGroupName) 
                 filteredUnits = filteredUnits.filter(unit => unit.group_name === allowedGroupName);
@@ -449,4 +449,5 @@ const CrudPage = ({ unitGroup }) => {
 };
 
 export default CrudPage;
+
 
