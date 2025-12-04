@@ -183,7 +183,7 @@ const CrudPage = ({ unitGroup }) => {
         if (!isAdmin) { setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/${REPORT_API}/all`); 
+            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); 
             setLaporan(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -198,7 +198,7 @@ const CrudPage = ({ unitGroup }) => {
             setError(null);
             setSuccessMessage(null);
             try {
-                await axios.delete(`${API_URL}/${REPORT_API}/${id_laporan}`);
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`);
                 setSuccessMessage('Laporan berhasil dihapus.');
                 fetchLaporan();
             } catch (error) {
@@ -243,9 +243,9 @@ const CrudPage = ({ unitGroup }) => {
 
         try {
             if (isEditMode) {
-                await axios.put(`${API_URL}/${REPORT_API}/${formData.id_laporan}`, dataToSend);
+                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, dataToSend);
             } else {
-                await axios.post(`${API_URL}/${REPORT_API}`, dataToSend);
+                await axios.post(`${API_URL}/api/${REPORT_API}`, dataToSend);
             }
 
             // window.alert("Laporan berhasil disimpan!"); // ⬅️ ALERT BERHASIL
@@ -449,5 +449,6 @@ const CrudPage = ({ unitGroup }) => {
 };
 
 export default CrudPage;
+
 
 
