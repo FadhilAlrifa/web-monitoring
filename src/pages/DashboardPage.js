@@ -138,7 +138,6 @@ const DashboardPage = ({ unitGroup }) => {
         return finalValue.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 });
     };
     
-    const totalProduksiTitle = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
     const hambatanChartTitle = `Total Hambatan ${monthNames[selectedMonth - 1]} ${selectedYear}`;
 
     
@@ -158,52 +157,67 @@ const DashboardPage = ({ unitGroup }) => {
             {isLoading && !error && <p className="text-center text-blue-600 p-8">Memuat data...</p>}
 
             {/* 1. BARIS KONTROL UTAMA */}
-            <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-start">
-                
-                {/* A. TOTAL PRODUKSI KPI */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+
+                {/* ✅ TOTAL PRODUKSI */}
                 {!isLoading && (
-                    <div className="bg-white p-3 rounded-lg shadow-md border-l-4 border-green-600 flex flex-col justify-center min-h-[80px]">
-                        <p className="text-xs font-medium text-gray-500 uppercase flex items-center">
-                            <span className="mr-1 text-base">🏢</span> 
-                            {totalProduksiTitle}
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
+                    <div>
+                        <p className="text-sm uppercase opacity-90">
+                        Total Produksi
                         </p>
-                        <h2 className="text-xl font-bold text-gray-900">
-                            {formatProductionValue(dashboardData.totalProductionMTD)}
-                            <span className="text-xl font-bold text-blue-600 ml-1">TON</span>
+                        <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
+                        {formatProductionValue(dashboardData.totalProductionMTD)} 
+                        <span className="text-lg font-semibold ml-1">TON</span>
                         </h2>
                     </div>
+                    <div className="text-5xl opacity-20 font-black">MTD</div>
+                    </div>
                 )}
-                
-                {/* B. SELEKTOR BULAN DAN TAHUN */}
-                <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-blue-600 flex gap-3 items-center">
+
+                {/* ✅ FILTER BULAN & TAHUN */}
+                <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col gap-4 justify-center">
+                    <p className="text-sm font-semibold text-gray-600">Filter Periode</p>
+
+                    <div className="flex gap-3">
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        className="p-2 border rounded-md"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
-                        {monthNames.map((name, index) => (<option key={index + 1} value={index + 1}>{name}</option>))}
+                        {monthNames.map((name, index) => (
+                        <option key={index + 1} value={index + 1}>{name}</option>
+                        ))}
                     </select>
+
                     <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="p-2 border rounded-md"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
-                        {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
+                        {availableYears.map(year => (
+                        <option key={year} value={year}>{year}</option>
+                        ))}
                     </select>
+                    </div>
                 </div>
-                
-                {/* C. UNIT SELECTOR (Hanya tampilkan jika unitGroup bukan Global) */}
+
+                {/* ✅ FILTER UNIT KERJA */}
                 {groupDisplay !== 'Global' && (
-                    <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-yellow-600 flex items-center">
-                        <label className="mr-2 text-sm font-medium text-gray-700">Pilih Unit:</label>
-                        <UnitSelector 
-                            onSelect={setSelectedUnit} 
-                            selectedUnit={selectedUnit} 
-                            allowedGroupName={groupDisplay} 
-                        />
+                    <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
+                    <p className="text-sm font-semibold text-gray-600 mb-3">
+                        Unit Kerja Aktif
+                    </p>
+
+                    <UnitSelector 
+                        onSelect={setSelectedUnit} 
+                        selectedUnit={selectedUnit} 
+                        allowedGroupName={groupDisplay} 
+                    />
                     </div>
                 )}
-            </div>
+
+                </div>
             {/* Akhir BARIS KONTROL UTAMA */}
 
             
