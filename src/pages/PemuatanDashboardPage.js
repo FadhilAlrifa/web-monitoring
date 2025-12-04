@@ -77,106 +77,115 @@ const PemuatanDashboardPage = () => {
     // --- RENDERING UTAMA ---
     return (
         <div className="min-h-screen bg-gray-50 p-8">
-            
-            <div className="flex justify-between items-end mb-6 border-b pb-2">
-                <h1 className="text-4xl font-extrabold text-gray-900">
-                    Dashboard Kinerja {PAGE_GROUP_NAME}
-                </h1>
-                {/* Status User (dikelola di AppLayout) */}
+
+            {/* ================= HEADER ================= */}
+            <div className="mb-10">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide">
+                Production Performance Center — {PAGE_GROUP_NAME}
+            </h1>
+            <p className="text-gray-500 mt-1">
+                Sistem Monitoring Tonase Pemuatan Terintegrasi
+            </p>
             </div>
 
+            {error && (
+            <p className="text-red-600 p-4 bg-red-100 rounded-xl mb-6">
+                {error}
+            </p>
+            )}
 
-            {error && <p className="text-red-600 p-4 bg-red-100 rounded-lg">{error}</p>}
-            
-            {isLoading && !error && <p className="text-center text-blue-600 p-8">Memuat data...</p>}
+            {isLoading && !error && (
+            <p className="text-center text-blue-600 p-8 font-semibold">
+                Memuat data...
+            </p>
+            )}
 
-            {/* 1. BARIS KONTROL UTAMA: KPI | Bulan/Tahun | Unit Kerja */}
+            {/* ================= HEADER CONTROL PANEL ================= */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
 
-                {/* ✅ TOTAL PRODUKSI */}
-                {!isLoading && (
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
-                    <div>
-                        <p className="text-sm uppercase opacity-90">
-                        Total Produksi
-                        </p>
-                        <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
-                        {formatProductionValue(dashboardData.totalProductionMTD)} 
-                        <span className="text-lg font-semibold ml-1">TON</span>
-                        </h2>
-                    </div>
-                    <div className="text-5xl opacity-20 font-black">MTD</div>
-                    </div>
-                )}
-
-                {/* ✅ FILTER BULAN & TAHUN */}
-                <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col gap-4 justify-center">
-                    <p className="text-sm font-semibold text-gray-600">Filter Periode</p>
-
-                    <div className="flex gap-3">
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        {monthNames.map((name, index) => (
-                        <option key={index + 1} value={index + 1}>{name}</option>
-                        ))}
-                    </select>
-
-                    <select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        {availableYears.map(year => (
-                        <option key={year} value={year}>{year}</option>
-                        ))}
-                    </select>
-                    </div>
-                </div>
-
-                {/* ✅ FILTER UNIT KERJA */}
-                {groupDisplay !== 'Global' && (
-                    <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
-                    <p className="text-sm font-semibold text-gray-600 mb-3">
-                        Unit Kerja Aktif
+            {/* ✅ TOTAL PEMUATAN */}
+            {!isLoading && (
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p className="text-sm uppercase opacity-90">
+                    Total Tonase • {totalMuatTitle}
                     </p>
-
-                    <UnitSelector 
-                        onSelect={setSelectedUnit} 
-                        selectedUnit={selectedUnit} 
-                        allowedGroupName={groupDisplay} 
-                    />
-                    </div>
-                )}
-
+                    <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
+                    {formatProductionValue(pemuatanData.totalProductionMTD)}
+                    <span className="text-lg font-semibold ml-1">TON</span>
+                    </h2>
                 </div>
-            {/* Akhir BARIS KONTROL UTAMA */}
-
-            
-            {/* 2. AREA VISUALISASI CHART */}
-            {selectedUnit && !isLoading && !error && (
-                <div className="grid grid-cols-1 gap-6 mt-6">
-                    
-                    {/* CHART HARIAN */}
-                    <div className="lg:col-span-1">
-                         <PemuatanDailyChart dailyReport={pemuatanData.dailyReport} />
-                    </div>
-                    
-                    {/* CHART BULANAN */}
-                    <div className="lg:col-span-1">
-                        <PemuatanMonthlyChart monthlyReport={pemuatanData.monthlyReport} />
-                    </div>
+                <div className="text-5xl opacity-20 font-black">MTD</div>
                 </div>
             )}
-            
-            {/* Pesan jika belum ada unit yang dipilih */}
-            {!selectedUnit && !isLoading && (
-                <p className="text-center text-gray-500 mt-10 p-4 bg-yellow-100 rounded-lg border border-yellow-300">
-                    Silakan pilih **Unit Kerja** untuk menampilkan data dashboard.
+
+            {/* ✅ FILTER BULAN & TAHUN */}
+            <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col gap-4 justify-center">
+                <p className="text-sm font-semibold text-gray-600">
+                Filter Periode
                 </p>
+                <div className="flex gap-3">
+                <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                    {monthNames.map((name, index) => (
+                    <option key={index + 1} value={index + 1}>{name}</option>
+                    ))}
+                </select>
+
+                <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                    {availableYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                    ))}
+                </select>
+                </div>
+            </div>
+
+            {/* ✅ FILTER UNIT KERJA */}
+            <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
+                <p className="text-sm font-semibold text-gray-600 mb-3">
+                Unit Kerja Aktif
+                </p>
+
+                <UnitSelector 
+                onSelect={setSelectedUnit}
+                selectedUnit={selectedUnit}
+                allowedGroupName={PAGE_GROUP_NAME}
+                />
+            </div>
+
+            </div>
+            {/* ================= END HEADER CONTROL PANEL ================= */}
+
+
+            {/* ================= AREA CHART ================= */}
+            {selectedUnit && !isLoading && !error && (
+            <div className="grid grid-cols-1 gap-8">
+
+                <div className="bg-white p-6 rounded-2xl shadow-md">
+                <PemuatanDailyChart dailyReport={pemuatanData.dailyReport} />
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-md">
+                <PemuatanMonthlyChart monthlyReport={pemuatanData.monthlyReport} />
+                </div>
+
+            </div>
             )}
+
+            {/* ================= EMPTY STATE ================= */}
+            {!selectedUnit && !isLoading && (
+            <div className="text-center text-gray-500 mt-10 p-6 bg-yellow-100 rounded-xl border border-yellow-300">
+                Silakan pilih <b>Unit Kerja</b> untuk menampilkan data dashboard.
+            </div>
+            )}
+
         </div>
     );
 };

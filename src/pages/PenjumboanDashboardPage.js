@@ -84,10 +84,10 @@ const PenjumboanDashboardPage = () => {
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
                     <div>
                         <p className="text-sm uppercase opacity-90">
-                        Total Produksi
+                        Total Produksi • {totalProduksiTitle}
                         </p>
                         <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
-                        {formatProductionValue(dashboardData.totalProductionMTD)} 
+                        {formatProductionValue(penjumboanData.totalProductionMTD)}
                         <span className="text-lg font-semibold ml-1">TON</span>
                         </h2>
                     </div>
@@ -97,8 +97,9 @@ const PenjumboanDashboardPage = () => {
 
                 {/* ✅ FILTER BULAN & TAHUN */}
                 <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col gap-4 justify-center">
-                    <p className="text-sm font-semibold text-gray-600">Filter Periode</p>
-
+                    <p className="text-sm font-semibold text-gray-600">
+                    Filter Periode
+                    </p>
                     <div className="flex gap-3">
                     <select
                         value={selectedMonth}
@@ -123,19 +124,17 @@ const PenjumboanDashboardPage = () => {
                 </div>
 
                 {/* ✅ FILTER UNIT KERJA */}
-                {groupDisplay !== 'Global' && (
-                    <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
+                <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
                     <p className="text-sm font-semibold text-gray-600 mb-3">
-                        Unit Kerja Aktif
+                    Unit Kerja Aktif
                     </p>
 
                     <UnitSelector 
-                        onSelect={setSelectedUnit} 
-                        selectedUnit={selectedUnit} 
-                        allowedGroupName={groupDisplay} 
+                    onSelect={setSelectedUnit}
+                    selectedUnit={selectedUnit}
+                    allowedGroupName={PAGE_GROUP_NAME}
                     />
-                    </div>
-                )}
+                </div>
 
                 </div>
             {/* Akhir BARIS KONTROL UTAMA */}

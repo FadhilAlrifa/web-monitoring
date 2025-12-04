@@ -138,13 +138,13 @@ const PackingPlantDashboard = () => {
 
                 {/* ✅ TOTAL PRODUKSI */}
                 {!isLoading && (
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
+                    <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
                     <div>
                         <p className="text-sm uppercase opacity-90">
-                        Total Produksi
+                        Total Produksi • {totalMuatTitle}
                         </p>
                         <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
-                        {formatProductionValue(dashboardData.totalProductionMTD)} 
+                        {formatProductionValue(ppData.totalProductionMTD)}
                         <span className="text-lg font-semibold ml-1">TON</span>
                         </h2>
                     </div>
@@ -154,13 +154,15 @@ const PackingPlantDashboard = () => {
 
                 {/* ✅ FILTER BULAN & TAHUN */}
                 <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col gap-4 justify-center">
-                    <p className="text-sm font-semibold text-gray-600">Filter Periode</p>
+                    <p className="text-sm font-semibold text-gray-600">
+                    Filter Periode
+                    </p>
 
                     <div className="flex gap-3">
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                     >
                         {monthNames.map((name, index) => (
                         <option key={index + 1} value={index + 1}>{name}</option>
@@ -170,7 +172,7 @@ const PackingPlantDashboard = () => {
                     <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                     >
                         {availableYears.map(year => (
                         <option key={year} value={year}>{year}</option>
@@ -180,22 +182,19 @@ const PackingPlantDashboard = () => {
                 </div>
 
                 {/* ✅ FILTER UNIT KERJA */}
-                {groupDisplay !== 'Global' && (
-                    <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
+                <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
                     <p className="text-sm font-semibold text-gray-600 mb-3">
-                        Unit Kerja Aktif
+                    Unit Kerja Aktif
                     </p>
 
                     <UnitSelector 
-                        onSelect={setSelectedUnit} 
-                        selectedUnit={selectedUnit} 
-                        allowedGroupName={groupDisplay} 
+                    onSelect={setSelectedUnit}
+                    selectedUnit={selectedUnit}
+                    allowedGroupName={PAGE_GROUP_NAME}
                     />
-                    </div>
-                )}
+                </div>
 
                 </div>
-            {/* Akhir BARIS KONTROL UTAMA */}
 
             
             {/* 2. AREA VISUALISASI CHART (Layout 3-Row Stacked) */}
