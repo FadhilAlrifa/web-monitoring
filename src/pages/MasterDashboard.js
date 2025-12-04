@@ -23,35 +23,33 @@ const moduleCards = [
 
 const MasterDashboard = () => {
     const [summary, setSummary] = useState({
-        totalProductionMTD: 0,
-        totalHambatanMTD: 0,
-        totalTargetMTD: 0,
+        totalProductionMTD: 124578, // Mock default for design preview
+        totalHambatanMTD: 580,      // Mock default for design preview
+        totalTargetMTD: 150000,     // Mock default for design preview
     });
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-    const [isLoading, setIsLoading] = useState(true); // Default menjadi true untuk loading state
+    const [isLoading, setIsLoading] = useState(false); // Set default to false for better UI preview
     const navigate = useNavigate();
     
     const availableYears = [2025, 2024, 2023]; 
 
-    // --- FETCH RINGKASAN GLOBAL MTD (Fungsional) ---
+    // --- FETCH RINGKASAN GLOBAL MTD (Optimasi) ---
     useEffect(() => {
         const fetchGlobalSummary = async () => {
             setIsLoading(true);
             try {
-                // Endpoint ini harus dibuat di backend (server.js) untuk menghasilkan data agregat
+                // Endpoint ini diasumsikan dibuat di backend untuk mengambil total MTD global
                 const endpoint = `${API_URL}/api/global-summary/${selectedYear}/${selectedMonth}`;
                 
+                // Catatan: Jika endpoint ini belum tersedia di backend, ini akan gagal.
+                // Anda perlu membuat endpoint ini di server.js yang hanya menjalankan SUM.
                 const res = await axios.get(endpoint);
 
-                setSummary({
-                    totalProductionMTD: res.data.totalProductionMTD || 0,
-                    totalHambatanMTD: res.data.totalHambatanMTD || 0,
-                    totalTargetMTD: res.data.totalTargetMTD || 0,
-                });
+                setSummary(res.data);
             } catch (err) {
                 console.error("Gagal fetch global summary. Pastikan endpoint /api/global-summary sudah dibuat:", err);
-                // Fallback data
+                // Fallback data agar tampilan tidak kosong saat API error
                 setSummary({ totalProductionMTD: 0, totalHambatanMTD: 0, totalTargetMTD: 0 });
             } finally {
                 setIsLoading(false);
@@ -72,13 +70,6 @@ const MasterDashboard = () => {
         ? Math.min(100, (summary.totalProductionMTD / summary.totalTargetMTD) * 100).toFixed(1) 
         : 0;
     
-    // Warna progress bar (Hijau > 80%, Kuning 50%-80%, Merah < 50%)
-    const getProgressColor = (percent) => {
-        if (percent >= 80) return 'bg-green-500';
-        if (percent >= 50) return 'bg-yellow-500';
-        return 'bg-red-500';
-    };
-
     // --- RENDERING UTAMA ---
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
@@ -87,8 +78,8 @@ const MasterDashboard = () => {
             </h1>
             <p className="text-gray-500 mb-8">Ringkasan Performa Bulanan PT. Biringkassi Raya</p>
 
-            {/* Global Filters & Time Display (Desain Elegan) */}
-            <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-10">
+            {/* Global Filters & Time Display */}
+            <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-purple-600/70 mb-10">
                 <div className="flex flex-wrap gap-4 items-center">
                     
                     {/* Display Bulan Aktif */}
@@ -98,16 +89,16 @@ const MasterDashboard = () => {
                     </div>
 
                     {/* Selector Bulan */}
-                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:ring-2 focus:ring-purple-200">
+                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:shadow-md">
                         {monthNames.map((name, index) => (<option key={index + 1} value={index + 1}>{name}</option>))}
                     </select>
                     
                     {/* Selector Tahun */}
-                    <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:ring-2 focus:ring-purple-200">
+                    <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:shadow-md">
                         {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
                     </select>
                     
-                    <span className="text-gray-500 text-sm ml-auto font-medium">{monthDisplay}</span>
+                    <span className="text-gray-500 text-sm ml-auto">{monthDisplay}</span>
                 </div>
             </div>
             
@@ -117,15 +108,15 @@ const MasterDashboard = () => {
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10 animate-pulse">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-white p-6 rounded-xl shadow-xl h-32 border-b-2 border-gray-100"></div>
+                        <div key={i} className="bg-white p-6 rounded-xl shadow-lg h-32 border-l-4 border-gray-300"></div>
                     ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
                     
                     {/* Total Produksi MTD */}
-                    <div className="bg-white p-6 rounded-xl shadow-xl transform hover:scale-[1.02] transition duration-300 border border-gray-100">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} className="text-blue-500" /> Total Produksi MTD</p>
+                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-blue-500/70 transform hover:scale-[1.02] transition duration-300">
+                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Total Produksi MTD</p>
                         <h2 className="text-4xl font-extrabold text-blue-800 mt-2">
                             {formatValue(summary.totalProductionMTD)}
                             <span className="text-xl font-semibold text-blue-600 ml-1">TON</span>
@@ -134,16 +125,16 @@ const MasterDashboard = () => {
                         
                         {/* Progress Bar */}
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-                            <div className={`h-2.5 rounded-full ${getProgressColor(progressPercent)}`} style={{ width: `${progressPercent}%` }}></div>
+                            <div className="h-2.5 rounded-full bg-blue-500" style={{ width: `${progressPercent}%` }}></div>
                         </div>
-                        <p className="text-xs mt-1 font-semibold" style={{ color: progressPercent >= 80 ? '#10B981' : progressPercent >= 50 ? '#F59E0B' : '#EF4444' }}>
+                        <p className="text-xs mt-1 font-semibold" style={{ color: `hsl(${progressPercent > 80 ? '120' : progressPercent > 50 ? '45' : '0'}, 80%, 40%)` }}>
                             {progressPercent}% dari Target
                         </p>
                     </div>
 
                     {/* Total Jam Hambatan MTD */}
-                    <div className="bg-white p-6 rounded-xl shadow-xl transform hover:scale-[1.02] transition duration-300 border border-gray-100">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><Clock size={16} className="text-red-500" /> Total Jam Hambatan</p>
+                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-red-500/70 transform hover:scale-[1.02] transition duration-300">
+                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><Clock size={16} /> Total Jam Hambatan</p>
                         <h2 className="text-4xl font-extrabold text-red-800 mt-2">
                             {formatValue(summary.totalHambatanMTD)}
                             <span className="text-xl font-semibold text-red-600 ml-1">JAM</span>
@@ -152,8 +143,8 @@ const MasterDashboard = () => {
                     </div>
                     
                     {/* Efisiensi Keseluruhan */}
-                    <div className="bg-white p-6 rounded-xl shadow-xl transform hover:scale-[1.02] transition duration-300 border border-gray-100">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} className="text-purple-600" /> Efisiensi Total</p>
+                    <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-purple-500/70 transform hover:scale-[1.02] transition duration-300">
+                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Efisiensi Total</p>
                         <h2 className="text-4xl font-extrabold text-purple-800 mt-2">
                             {progressPercent}%
                             <span className="text-xl font-semibold text-purple-600 ml-1">EFISIENSI</span>
@@ -174,7 +165,7 @@ const MasterDashboard = () => {
                         <button 
                             key={card.title}
                             onClick={() => navigate(card.path)}
-                            className={`bg-white p-6 rounded-xl shadow-md transition duration-300 hover:shadow-lg text-left border border-gray-200 transform hover:translate-x-1`}
+                            className={`bg-white p-6 rounded-xl shadow-xl transition duration-300 hover:shadow-2xl transform hover:-translate-y-0.5 text-left border-l-4 ${card.color.replace('text-', 'border-')}`}
                         >
                             <div className="flex items-center space-x-4">
                                 <Icon size={28} className={card.color} />
