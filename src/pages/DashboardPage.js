@@ -251,7 +251,7 @@ const DashboardPage = ({ unitGroup }) => {
             {/* Pesan jika belum ada unit yang dipilih */}
             {!selectedUnit && groupDisplay !== 'Global' && !isLoading && (
                 <p className="text-center text-gray-500 mt-10 p-4 bg-yellow-100 rounded-lg border border-yellow-300">
-                    Silakan pilih **Unit Kerja** untuk menampilkan data harian dan bulanan.
+                    Silahkan pilih *Unit Kerja* untuk menampilkan data harian dan bulanan.
                 </p>
             )}
         </div>

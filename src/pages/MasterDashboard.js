@@ -5,16 +5,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Import komponen chart khusus (Diperlukan untuk JSX)
 import UnitSelector from '../components/UnitSelector';
-import DailyChart from '../components/DailyChart';       
-import HambatanPieChart from '../components/HambatanPieChart';  
-import MonthlyChart from '../components/MonthlyChart';      
 import RilisProduksiChart from '../components/RilisProduksiChart';  
-import PenjumboanDailyChart from '../components/PenjumboanDailyChart';  
-import PemuatanDailyChart from '../components/PemuatanDailyChart';  
-import PackingPlantDailyChart from '../components/PackingPlantDailyChart';
-import PackingPlantMonthlyChart from '../components/PackingPlantMonthlyChart';
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart';  
 
+// Komponen chart detail harian/bulanan di-import tapi tidak digunakan di sini 
+// untuk menghindari pengambilan data yang berat.
 
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
@@ -22,7 +17,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 // HAPUS PANGGILAN REDUNDAN: fetch(`${API_URL}/api`)
 const today = new Date();
 
-// Definisi Nama Bulan (FIX: Mengatasi error no-undef pada monthNames)
+// Definisi Nama Bulan
 const monthNames = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
@@ -40,15 +35,15 @@ const MasterDashboard = () => {
     // State untuk Master Data Unit (Dipakai oleh semua selector)
     const [allUnits, setAllUnits] = useState([]);
 
-    // States untuk Filter & Data Spesifik MODUL
+    // States untuk Filter & Data Spesifik MODUL (Hanya simpan MTD dan Rilis)
     const [modulStates, setModulStates] = useState({
         // PRODUKSI UMUM (LaporanHarian)
-        pabrik:      { unitId: null, name: 'Pabrik', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
-        bks:         { unitId: null, name: 'BKS', data: { dailyReport: [], monthlyReport: [], hambatanSummary: {}, rilisData: [] } },
+        pabrik:      { unitId: null, name: 'Pabrik', data: { totalProductionMTD: 0, rilisData: [] } },
+        bks:         { unitId: null, name: 'BKS', data: { totalProductionMTD: 0, rilisData: [] } },
         // MODUL SPESIFIK
-        penjumboan:  { unitId: null, name: 'Penjumboan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
-        pemuatan:    { unitId: null, name: 'Pemuatan', data: { dailyReport: [], monthlyReport: [], totalProductionMTD: 0 } },
-        packing:     { unitId: null, name: 'Packing Plant', data: { dailyReport: [], monthlyReport: [], rilisData: [], totalProductionMTD: 0 } },
+        penjumboan:  { unitId: null, name: 'Penjumboan', data: { totalProductionMTD: 0 } },
+        pemuatan:    { unitId: null, name: 'Pemuatan', data: { totalProductionMTD: 0 } },
+        packing:     { unitId: null, name: 'Packing Plant', data: { totalProductionMTD: 0, rilisData: [] } },
     });
     
     const [isLoading, setIsLoading] = useState(true);
@@ -58,8 +53,7 @@ const MasterDashboard = () => {
     useEffect(() => {
         const fetchMasterUnits = async () => {
             try {
-                // PERBAIKAN: Tambahkan /api/
-                const res = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
+                const res = await axios.get(`${API_URL}/api/units`); 
                 setAllUnits(res.data);
                 setIsLoading(false);
             } catch (err) {
@@ -70,15 +64,15 @@ const MasterDashboard = () => {
         fetchMasterUnits();
     }, []);
     
-    // --- FUNGSI UTAMA FETCH DATA MODUL ---
+    // --- FUNGSI UTAMA FETCH DATA MODUL (Hanya ambil Total MTD) ---
     const fetchModuleData = async (moduleKey, unitId, groupName) => {
         if (!unitId || !selectedYear || !selectedMonth) return;
 
         let endpoint;
-        // Gunakan /api/ pada semua endpoint
         switch (moduleKey) {
             case 'pabrik':
             case 'bks':
+                // Dashboard Produksi/Hambatan
                 endpoint = `${API_URL}/api/dashboard/${unitId}/${selectedYear}/${selectedMonth}`; 
                 break;
             case 'penjumboan':
@@ -96,17 +90,23 @@ const MasterDashboard = () => {
 
         try {
             const res = await axios.get(endpoint);
+            // Hanya ambil totalProductionMTD dari response yang mungkin berisi dailyReport, monthlyReport, dll.
+            const totalMTD = res.data.totalProductionMTD || 0; 
+
             setModulStates(prev => ({
                 ...prev,
-                [moduleKey]: { ...prev[moduleKey], data: { ...prev[moduleKey].data, ...res.data } }
+                [moduleKey]: { 
+                    ...prev[moduleKey], 
+                    data: { ...prev[moduleKey].data, totalProductionMTD: totalMTD } 
+                }
             }));
 
         } catch (err) {
-            console.error(`Error fetching data for ${groupName}:`, err);
+            console.error(`Error fetching MTD data for ${groupName}:`, err);
         }
     };
     
-    // --- FETCH DATA RILIS (Agregasi) ---
+    // --- FETCH DATA RILIS (Agregasi Tahun Bulanan) ---
     const fetchRilisData = async (moduleKey, groupName) => {
         let apiPath;
         if (moduleKey === 'packing') apiPath = 'packing-plant';
@@ -115,11 +115,13 @@ const MasterDashboard = () => {
         else return;
 
         try {
-            // PERBAIKAN: Tambahkan /api/
-            const res = await axios.get(`${API_URL}/api/${apiPath}/rilis/${selectedYear}`); // <--- PERBAIKAN
+            const res = await axios.get(`${API_URL}/api/${apiPath}/rilis/${selectedYear}`); 
             setModulStates(prev => ({
                 ...prev,
-                [moduleKey]: { ...prev[moduleKey], data: { ...prev[moduleKey].data, rilisData: res.data } }
+                [moduleKey]: { 
+                    ...prev[moduleKey], 
+                    data: { ...prev[moduleKey].data, rilisData: res.data || [] } 
+                }
             }));
         } catch (err) {
             console.error(`Error fetching Rilis data for ${groupName}:`, err);
@@ -141,8 +143,7 @@ const MasterDashboard = () => {
         fetchRilisData('bks', 'BKS');
         fetchRilisData('packing', 'Packing Plant');
 
-    // Tambahkan modulStates ke dependency array untuk memastikan fetchModuleData memiliki nilai unitId terbaru.
-    }, [selectedYear, selectedMonth, modulStates]); // <--- PERBAIKAN DEPENDENCY
+    }, [selectedYear, selectedMonth, modulStates]); 
 
     // --- RENDER HELPERS ---
     const handleUnitChange = (moduleKey, newUnitId) => {
@@ -177,8 +178,8 @@ const MasterDashboard = () => {
     if (isLoading) { return <p className="text-center p-20">Memuat data master...</p>; }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-6 border-b pb-2">
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 border-b pb-2">
                 Master Dashboard Kinerja Operasi
             </h1>
 
@@ -191,12 +192,12 @@ const MasterDashboard = () => {
                 </div>
                 
                 {/* Selector Bulan */}
-                <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border rounded-md">
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border rounded-md text-sm">
                     {monthNames.map((name, index) => (<option key={index + 1} value={index + 1}>{name}</option>))}
                 </select>
                 
                 {/* Selector Tahun */}
-                <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border rounded-md">
+                <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border rounded-md text-sm">
                     {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
                 </select>
             </div>
@@ -207,8 +208,8 @@ const MasterDashboard = () => {
                 {/* MODUL 1: PRODUKSI PABRIK */}
                 {/* ==================================================================== */}
                 <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-red-500">
-                    <h2 className="text-3xl font-bold mb-4 text-red-700">1. Produksi Pabrik</h2>
-                    <div className="flex gap-4 mb-4 items-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-red-700">1. Produksi Pabrik</h2>
+                    <div className="flex flex-wrap gap-4 mb-4 items-center">
                         <UnitSelector 
                             onSelect={(id) => handleUnitChange('pabrik', id)} 
                             selectedUnit={modulStates.pabrik.unitId} 
@@ -220,7 +221,7 @@ const MasterDashboard = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                        {/* CHART DETAIL HILANG */}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
                                  rilisData={modulStates.pabrik.data?.rilisData || []} 
@@ -235,8 +236,8 @@ const MasterDashboard = () => {
                 {/* MODUL 2: PRODUKSI BKS */}
                 {/* ==================================================================== */}
                 <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-green-500">
-                    <h2 className="text-3xl font-bold mb-4 text-green-700">2. Produksi BKS</h2>
-                    <div className="flex gap-4 mb-4 items-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-green-700">2. Produksi BKS</h2>
+                    <div className="flex flex-wrap gap-4 mb-4 items-center">
                         <UnitSelector 
                             onSelect={(id) => handleUnitChange('bks', id)} 
                             selectedUnit={modulStates.bks.unitId} 
@@ -248,7 +249,7 @@ const MasterDashboard = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                        {/* CHART DETAIL HILANG */}
                          <div className="lg:col-span-3 mt-4">
                              <RilisProduksiChart 
                                  rilisData={modulStates.bks.data?.rilisData || []} 
@@ -264,8 +265,8 @@ const MasterDashboard = () => {
                 {/* MODUL 3: PENJUMBOAN */}
                 {/* ==================================================================== */}
                 <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-blue-500">
-                    <h2 className="text-3xl font-bold mb-4 text-blue-700">3. Penjumboan</h2>
-                    <div className="flex gap-4 mb-4 items-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-700">3. Penjumboan</h2>
+                    <div className="flex flex-wrap gap-4 mb-4 items-center">
                         <UnitSelector 
                             onSelect={(id) => handleUnitChange('penjumboan', id)} 
                             selectedUnit={modulStates.penjumboan.unitId} 
@@ -276,7 +277,7 @@ const MasterDashboard = () => {
                          </span>
                     </div>
                     
-                    {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                    {/* CHART DETAIL HILANG */}
                     <div className="mt-4">
                         <p className="text-sm text-gray-500">
                             *Data harian dan bulanan dipindahkan ke halaman dashboard Penjumboan untuk optimasi.*
@@ -288,8 +289,8 @@ const MasterDashboard = () => {
                 {/* MODUL 4: PEMUATAN */}
                 {/* ==================================================================== */}
                  <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-yellow-500">
-                    <h2 className="text-3xl font-bold mb-4 text-yellow-700">4. Pemuatan</h2>
-                    <div className="flex gap-4 mb-4 items-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-yellow-700">4. Pemuatan</h2>
+                    <div className="flex flex-wrap gap-4 mb-4 items-center">
                         <UnitSelector 
                             onSelect={(id) => handleUnitChange('pemuatan', id)} 
                             selectedUnit={modulStates.pemuatan.unitId} 
@@ -300,7 +301,7 @@ const MasterDashboard = () => {
                          </span>
                     </div>
                     
-                    {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                    {/* CHART DETAIL HILANG */}
                     <div className="mt-4">
                         <p className="text-sm text-gray-500">
                             *Data harian dan bulanan dipindahkan ke halaman dashboard Pemuatan untuk optimasi.*
@@ -312,8 +313,8 @@ const MasterDashboard = () => {
                 {/* MODUL 5: PACKING PLANT */}
                 {/* ==================================================================== */}
                  <div className="p-6 bg-white rounded-xl shadow-lg border-t-4 border-indigo-500">
-                    <h2 className="text-3xl font-bold mb-4 text-indigo-700">5. Packing Plant</h2>
-                    <div className="flex gap-4 mb-4 items-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-indigo-700">5. Packing Plant</h2>
+                    <div className="flex flex-wrap gap-4 mb-4 items-center">
                         <UnitSelector 
                             onSelect={(id) => handleUnitChange('packing', id)} 
                             selectedUnit={modulStates.packing.unitId} 
@@ -325,7 +326,7 @@ const MasterDashboard = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* CHART DETAIL REMOVED FROM MASTER DASHBOARD */}
+                        {/* CHART DETAIL HILANG */}
                          {/* Chart Rilis Packing Plant (Selalu tampil) */}
                           <div className="lg:col-span-3 mt-4">
                               <RilisPackingPlantChart 
