@@ -144,7 +144,7 @@ const DashboardPage = ({ unitGroup }) => {
     // --- RENDERING UTAMA ---
     
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-gray-50 p-4">
             
             <div className="flex justify-between items-end mb-6 border-b pb-2">
                 <h1 className="text-4xl font-extrabold text-gray-900">

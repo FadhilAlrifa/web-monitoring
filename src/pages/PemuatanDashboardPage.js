@@ -79,7 +79,7 @@ const PemuatanDashboardPage = () => {
         <div className="min-h-screen bg-gray-50 p-8">
 
             {/* ================= HEADER ================= */}
-            <div className="mb-10">
+            <div className="flex justify-between items-end mb-6 border-b pb-2">
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide">
                     Dashboard Kinerja Pemuatan
                 </h1>

@@ -291,7 +291,7 @@ const CrudPage = ({ unitGroup }) => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-gray-50 p-4">
             {/* FORM */}
             <div className="bg-white p-8 rounded-2xl shadow-xl mb-10 border">
                 <form onSubmit={handleSubmit} className="space-y-8">
