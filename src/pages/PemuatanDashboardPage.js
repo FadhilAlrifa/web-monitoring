@@ -80,12 +80,9 @@ const PemuatanDashboardPage = () => {
 
             {/* ================= HEADER ================= */}
             <div className="mb-10">
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide">
-                Dashboard Kinerja Pemuatan
-            </h1>
-            <p className="text-gray-500 mt-1">
-                Sistem Monitoring Tonase Pemuatan Terintegrasi
-            </p>
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide">
+                    Dashboard Kinerja Pemuatan
+                </h1>
             </div>
 
             {error && (

@@ -345,12 +345,12 @@ const CrudPage = ({ unitGroup }) => {
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="bg-gradient-to-br from-green-600 to-emerald-500 text-white p-6 rounded-xl shadow-lg">
                             <p className="text-sm uppercase opacity-90">Total Produksi Hari Ini</p>
-                            <p className="text-3xl font-extrabold mt-2">{totalProduksi.toFixed(2)} TON</p>
+                            <p className="text-xl font-extrabold mt-2">{totalProduksi.toFixed(2)} TON</p>
                         </div>
 
                         <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-6 rounded-xl shadow-lg">
                             <p className="text-sm uppercase opacity-90">Total Jam Hambatan</p>
-                            <p className="text-3xl font-extrabold mt-2">{totalHambatan.toFixed(2)} Jam</p>
+                            <p className="text-xl font-extrabold mt-2">{totalHambatan.toFixed(2)} Jam</p>
                         </div>
                     </div>
 

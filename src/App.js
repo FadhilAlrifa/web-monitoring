@@ -77,7 +77,7 @@ const AppLayout = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 100-6 3 3 0 000 6z" />
                                     </svg>
-                                    {user?.username}
+                                    Hai, {user?.username}
                                 </span>
 
                                 {/* Role Badge */}
