@@ -141,7 +141,7 @@ const PackingPlantDashboard = () => {
                     <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
                     <div>
                         <p className="text-sm uppercase opacity-90">
-                        Total Produksi • {totalMuatTitle}
+                        Total Produksi
                         </p>
                         <h2 className="text-3xl font-extrabold mt-2 tracking-wide">
                         {formatProductionValue(ppData.totalProductionMTD)}

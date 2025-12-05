@@ -116,7 +116,7 @@ const MasterDashboard = () => {
                     
                     {/* Total Produksi MTD */}
                     <div className="bg-white p-6 rounded-xl shadow-2xl border-b-4 border-blue-500/70 transform hover:scale-[1.02] transition duration-300">
-                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Total Produksi MTD</p>
+                        <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><LayoutDashboard size={16} /> Total Produksi Pabrik & Pelabuhan</p>
                         <h2 className="text-4xl font-extrabold text-blue-800 mt-2">
                             {formatValue(summary.totalProductionMTD)}
                             <span className="text-xl font-semibold text-blue-600 ml-1">TON</span>
