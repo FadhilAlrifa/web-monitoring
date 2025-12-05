@@ -68,7 +68,7 @@ const PenjumboanDashboardPage = () => {
     const totalProduksiTitle = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
     
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-gray-50 p-4">
             <h1 className="text-4xl font-extrabold text-gray-900 mb-6 border-b pb-2">
                 Dashboard Kinerja {PAGE_GROUP_NAME}
             </h1>

@@ -245,7 +245,7 @@ const PemuatanCrudPage = () => {
 
     // --- RENDER COMPONENT ---
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-gray-50 p-4">
             <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b pb-2">
                 {isEditMode ? '🛠️ Edit Data Laporan Pemuatan' : `➕ Input Data Harian ${PAGE_GROUP_NAME}`}
             </h1>

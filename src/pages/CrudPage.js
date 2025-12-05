@@ -293,11 +293,11 @@ const CrudPage = ({ unitGroup }) => {
     return (
         <div className="min-h-screen bg-gray-50 p-4">
             {/* FORM */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl mb-10 border">
+            <div className="bg-white p-8 rounded-2xl shadow-xl mb-6 border">
                 <form onSubmit={handleSubmit} className="space-y-8">
 
                     {/* ==== HEADER FORM ==== */}
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-2">
                         <h2 className="text-2xl font-extrabold text-gray-800">
                             {isEditMode ? "✏️ Edit Laporan Produksi" : "➕ Input Produksi Harian"}
                         </h2>
