@@ -94,7 +94,7 @@ const MasterDashboard = () => {
             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
                 📊 Rilis Produksi 
             </h1>
-            <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup utama.</p>
+            <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup .</p>
 
             {/* Global Filters & Time Display (Hanya Tahun) */}
             <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-10">
@@ -113,13 +113,9 @@ const MasterDashboard = () => {
                 </div>
             </div>
             
-            {/* === CHART RILIS UTAMA (SUSUNAN VERTIKAL) === */}
-            <h3 className="text-xl font-semibold text-gray-700 mb-4 border-t pt-6">Visualisasi Agregasi ({selectedYear})</h3>
-            
             {isLoading ? (
                 <p className="text-center p-10 text-blue-600 animate-pulse">Memuat data rilis bulanan...</p>
             ) : (
-                // Susunan Vertikal
                 <div className="space-y-6"> 
                     
                     {/* 1. Rilis Produksi Pabrik */}
@@ -128,7 +124,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-red-50">
                              <TrendingUp size={24} className="text-red-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik (Agregat)</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik</p>
                                  <h4 className="text-2xl font-extrabold text-red-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.pabrik))} <span className="text-lg font-semibold">TON</span>
                                  </h4>
@@ -147,7 +143,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-green-50">
                              <TrendingUp size={24} className="text-green-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan (Agregat)</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan</p>
                                  <h4 className="text-2xl font-extrabold text-green-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.bks))} <span className="text-lg font-semibold">TON</span>
                                  </h4>

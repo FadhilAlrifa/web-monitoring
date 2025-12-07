@@ -8,7 +8,7 @@ import {
  * Komponen Diagram Bulanan (ComposedChart: Line untuk Produksi dan Target).
  * Menerima array data bulanan ({year, month, total_produksi_ton, target_bulanan}) sebagai prop.
  */
-const MonthlyChart = ({ monthlyReport }) => {
+const MonthlyChart = ({ monthlyReport, groupName }) => {
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
                         "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -29,7 +29,7 @@ const MonthlyChart = ({ monthlyReport }) => {
     if (formattedData.length === 0 || formattedData.every(item => item.total_produksi_ton === 0 && item.target_bulanan === 0)) { 
         return (
             <div className="bg-white p-6 rounded-xl shadow-lg h-full flex flex-col justify-center items-center">
-                <h3 className="text-xl font-semibold mb-4 text-gray-700">Produksi Bulanan Packer Pabrik & Pelabuhan (MTD)</h3>
+                <h3 className="text-xl font-semibold mb-4 text-gray-700">Produksi Bulanan {groupName}</h3>
                 <p className="text-center text-gray-500 py-10">Tidak ada data bulanan yang ditemukan untuk unit ini.</p>
             </div>
         );
