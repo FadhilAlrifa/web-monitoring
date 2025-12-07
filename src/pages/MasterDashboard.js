@@ -68,13 +68,11 @@ const MasterDashboard = () => {
     };
     
     // --- FUNGSI BARU: FETCH TOTAL PRODUKSI SPESIFIK UNIT (YTD) ---
-    const fetchSpecificTotal = async (unitId, year) => { // <-- BULAN DIHAPUS
+    const fetchSpecificTotal = async (unitId, year) => { 
         if (!unitId) return setPackingUnitTotal(0);
 
         try {
-            // Gunakan bulan dummy (1) karena backend akan menghitung YTD jika bulan adalah 1,
-            // atau modifikasi backend untuk menghitung total setahun.
-            // ASUMSI: Backend akan mengembalikan totalProductionMTD YTD jika bulan diabaikan/diatur ke 1.
+            // Gunakan bulan dummy (1) karena backend akan menghitung YTD jika bulan diabaikan/diatur ke 1.
             const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; 
             const res = await axios.get(endpoint);
             
@@ -103,7 +101,7 @@ const MasterDashboard = () => {
     useEffect(() => {
         // Hanya panggil dengan unitId dan year
         fetchSpecificTotal(selectedPackingUnit, selectedYear); 
-    }, [selectedPackingUnit, selectedYear]); // <-- selectedMonth DIHAPUS
+    }, [selectedPackingUnit, selectedYear]); 
 
     // --- RENDER HELPERS ---
     const calculateTotalRilis = (data) => {
@@ -223,7 +221,7 @@ const MasterDashboard = () => {
                                     onSelect={setSelectedPackingUnit} 
                                     selectedUnit={selectedPackingUnit} 
                                     allowedGroupName="Packing Plant" 
-                                    allUnits={allUnits} 
+                                    allUnits={allUnits} // <-- allUnits DI PASS KE SELECTOR
                                 />
                                 <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
                                     <p className="text-xs text-gray-600">Total YTD Unit Terpilih ({yearDisplay}):</p>
