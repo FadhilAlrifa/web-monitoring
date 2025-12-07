@@ -37,7 +37,7 @@ const MonthlyChart = ({ monthlyReport, groupName }) => {
     
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg h-full">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Produksi Bulanan Packer Pabrik & Pelabuhan (MTD)</h3>
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">Produksi Bulanan {groupName}</h3>
             
             <ResponsiveContainer width="100%" height={400}>
                 <ComposedChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
