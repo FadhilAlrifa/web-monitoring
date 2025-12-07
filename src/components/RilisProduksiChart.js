@@ -97,7 +97,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
         !['month', 'monthLabel', 'TOTAL_PRODUKSI', 'RKAP'].includes(key)
     );
 
-    if (!processedData || processedData.length === 0) {
+    if (!processedData || processedData.length === 0 || unitKeys.length === 0) {
         return (
             <div className="bg-white p-6 rounded-xl shadow-lg h-96 flex flex-col justify-center items-center">
                 <h3 className="text-xl font-semibold mb-4 text-gray-700">Rilis Produksi {groupName} (Tahun {selectedYear})</h3>
@@ -114,6 +114,8 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                 <ComposedChart 
                     data={processedData}
                     margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+                    // Menggunakan barGap={2} untuk memisahkan bar agar tidak terlalu rapat
+                    barGap={2} 
                 > 
                     <CartesianGrid strokeDasharray="3 3" />
                     
