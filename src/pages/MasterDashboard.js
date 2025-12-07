@@ -6,6 +6,9 @@ import UnitSelector from '../components/UnitSelector'; // Diperlukan untuk filte
 import RilisProduksiChart from '../components/RilisProduksiChart'; 
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
 
+// HAPUS IMPOR CHART DETAIL YANG TIDAK DIGUNAKAN UNTUK OPTIMASI:
+// DailyChart, MonthlyChart, HambatanPieChart, dll.
+
 const API_URL = process.env.REACT_APP_API_URL;
 
 const today = new Date();
@@ -54,9 +57,8 @@ const MasterDashboard = () => {
         if (!unitId) return setPackingUnitTotal(0);
 
         try {
-            // Kita akan menggunakan endpoint dashboard Packing Plant yang sudah ada, 
-            // tetapi hanya mengambil total MTD dari responsnya.
-            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; // Menggunakan Month=1 sebagai dummy
+            // Menggunakan Month=1 sebagai dummy karena MTD Total harus agregat bulanan.
+            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; 
             const res = await axios.get(endpoint);
             
             // Asumsi: Backend mengirim totalProductionMTD
@@ -186,7 +188,7 @@ const MasterDashboard = () => {
                             <div className="flex items-center gap-3">
                                 <TrendingUp size={24} className="text-indigo-600" />
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (Agregat Tahun)</p>
+                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant</p>
                                     <h4 className="text-2xl font-extrabold text-indigo-700">
                                         {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
                                     </h4>
