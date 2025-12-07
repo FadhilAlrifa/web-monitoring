@@ -6,9 +6,6 @@ import UnitSelector from '../components/UnitSelector'; // Diperlukan untuk filte
 import RilisProduksiChart from '../components/RilisProduksiChart'; 
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
 
-// HAPUS IMPOR CHART DETAIL YANG TIDAK DIGUNAKAN UNTUK OPTIMASI:
-// DailyChart, MonthlyChart, HambatanPieChart, dll.
-
 const API_URL = process.env.REACT_APP_API_URL;
 
 const today = new Date();
@@ -28,6 +25,9 @@ const MasterDashboard = () => {
         packing:     [],
     });
 
+    // STATE MASTER DATA BARU
+    const [allUnits, setAllUnits] = useState([]); // <--- HARUS ADA
+    
     // STATE BARU untuk total spesifik Unit Packing Plant
     const [packingUnitTotal, setPackingUnitTotal] = useState(0); 
     const [selectedPackingUnit, setSelectedPackingUnit] = useState(null); 
@@ -37,6 +37,22 @@ const MasterDashboard = () => {
     
     const availableYears = [2025, 2024, 2023]; 
 
+    // --- FETCH MASTER UNIT (GLOBAL) ---
+    useEffect(() => {
+        const fetchMasterUnits = async () => {
+            try {
+                // Fetch daftar semua unit kerja
+                const res = await axios.get(`${API_URL}/api/units`); 
+                setAllUnits(res.data); // Menyimpan daftar unit global
+                setIsLoading(false);
+            } catch (err) {
+                console.error("Gagal fetch unit master:", err);
+                setIsLoading(false);
+            }
+        };
+        fetchMasterUnits();
+    }, []);
+    
     // --- FETCH DATA RILIS (Agregasi Tahun Bulanan) ---
     const fetchRilisData = async (moduleKey, apiPath) => {
         try {
@@ -75,11 +91,9 @@ const MasterDashboard = () => {
 
     // EFFECT 1: Mengambil data Rilis (Global)
     useEffect(() => {
-        setIsLoading(true);
         fetchRilisData('pabrik', 'produksi/pabrik');
         fetchRilisData('bks', 'produksi/bks');
         fetchRilisData('packing', 'packing-plant');
-        setIsLoading(false);
     }, [selectedYear]); 
     
     // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit atau Tahun berubah)
@@ -188,7 +202,7 @@ const MasterDashboard = () => {
                             <div className="flex items-center gap-3">
                                 <TrendingUp size={24} className="text-indigo-600" />
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant</p>
+                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (Agregat Tahun)</p>
                                     <h4 className="text-2xl font-extrabold text-indigo-700">
                                         {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
                                     </h4>
