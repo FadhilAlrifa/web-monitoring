@@ -88,16 +88,17 @@ const MasterDashboard = () => {
                 </div>
             </div>
             
-            {/* === CHART RILIS UTAMA (3 Kolom) === */}
+            {/* === CHART RILIS UTAMA (SUSUNAN VERTIKAL) === */}
             <h3 className="text-xl font-semibold text-gray-700 mb-4 border-t pt-6">Visualisasi Agregasi ({selectedYear})</h3>
             
             {isLoading ? (
                 <p className="text-center p-10 text-blue-600 animate-pulse">Memuat data rilis bulanan...</p>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                // PERBAIKAN: Mengganti lg:grid-cols-3 menjadi space-y-6 untuk susunan vertikal penuh
+                <div className="space-y-6"> 
                     
                     {/* 1. Rilis Produksi Pabrik */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 h-full">
+                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
                          <RilisProduksiChart 
                              rilisData={rilisDataStates.pabrik} 
                              selectedYear={selectedYear} 
@@ -106,7 +107,7 @@ const MasterDashboard = () => {
                     </div>
 
                     {/* 2. Rilis Produksi BKS (Pelabuhan) */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 h-full">
+                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
                          <RilisProduksiChart 
                              rilisData={rilisDataStates.bks} 
                              selectedYear={selectedYear} 
@@ -115,7 +116,7 @@ const MasterDashboard = () => {
                     </div>
                     
                     {/* 3. Rilis Packing Plant */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 h-full">
+                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
                          <RilisPackingPlantChart 
                              rilisData={rilisDataStates.packing} 
                              selectedYear={selectedYear} 
