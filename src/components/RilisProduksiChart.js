@@ -1,31 +1,77 @@
 import React, { useMemo } from 'react';
 import {
     ComposedChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
-    CartesianGrid, Line, LabelList
+    CartesianGrid, Line, LabelList, Label
 } from 'recharts';
 
 // Warna yang konsisten untuk unit (dapat disesuaikan)
 const UNIT_COLORS = [
-    '#007bff', // Biru Cerah
-    '#28a745', // Hijau
-    '#ffc107', // Kuning
-    '#dc3545', // Merah
-    '#6f42c1', // Ungu
+    '#007bff', // Biru Cerah - P1
+    '#ffc107', // Kuning - P2
+    '#28a745', // Hijau - P3
+    '#dc3545', // Merah - P4
+    '#6f42c1', // Ungu - P5
     '#17a2b8', // Cyan
     '#fd7e14', // Orange
     '#6c757d', // Abu-abu
 ];
 
+// Custom Tooltip Content untuk menampilkan detail per Unit dan Total
+const CustomTooltip = ({ active, payload, label, selectedYear }) => {
+    if (active && payload && payload.length) {
+        // Find total line and target line
+        const totalLine = payload.find(p => p.dataKey === 'TOTAL_PRODUKSI');
+        const targetLine = payload.find(p => p.dataKey === 'RKAP');
+        
+        return (
+            <div className="bg-white p-3 border border-gray-300 shadow-md rounded-lg text-sm">
+                <p className="font-bold text-gray-800 mb-1">{label} {selectedYear}</p>
+                {payload
+                    // Filter Bar (Unit)
+                    .filter(p => p.dataKey !== 'TOTAL_PRODUKSI' && p.dataKey !== 'RKAP' && p.type === 'bar') 
+                    .map((p, index) => (
+                        <p key={`tooltip-bar-${index}`} style={{ color: p.color }}>
+                            {p.name}: <span className="font-semibold">{p.value?.toLocaleString()} Ton</span>
+                        </p>
+                    ))}
+                
+                {/* Total and Target Lines */}
+                {(totalLine || targetLine) && (
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                        {totalLine && <p className="font-bold text-gray-700">Total: {totalLine.value?.toLocaleString()} Ton</p>}
+                        {targetLine && <p className="text-orange-500 font-semibold">Target RKAP: {targetLine.value?.toLocaleString()} Ton</p>}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    return null;
+};
 
+// Custom Label untuk Line Chart (Total Produksi & RKAP)
+const CustomLineLabel = ({ x, y, value, name }) => {
+    if (value && value > 0) {
+         return (
+            <text x={x} y={y - 10} dy={-4} fill="#000" fontSize={12} textAnchor="middle" fontWeight="bold">
+                {value.toLocaleString()}
+            </text>
+        );
+    }
+    return null;
+};
+
+
+// --- FUNGSI PREPARASI DATA (Kunci: Agregasi Unit Keys) ---
 const prepareRilisData = (data) => {
     // 1. Sort data berdasarkan bulan (1 hingga 12)
-    const sortedData = (data || []).sort((a, b) => a.month - b.month);
+    const processedData = (data || []).sort((a, b) => a.month - b.month);
     
-    // 2. Tambahkan total agregat per bulan (untuk Line Chart RKAP/TOTAL)
-    return sortedData.map(monthData => {
+    // 2. Tambahkan total agregat per bulan (Line Chart TOTAL)
+    return processedData.map(monthData => {
         let totalBulanan = 0;
+        // Hanya jumlahkan data key yang TIDAK termasuk month, monthLabel, RKAP
         Object.keys(monthData).forEach(key => {
-            if (key !== 'month' && key !== 'monthLabel' && key !== 'RKAP') {
+            if (key !== 'month' && key !== 'monthLabel' && key !== 'RKAP' && key !== 'TOTAL_PRODUKSI') {
                 totalBulanan += parseFloat(monthData[key]) || 0;
             }
         });
@@ -38,19 +84,19 @@ const prepareRilisData = (data) => {
     });
 };
 
+
 const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
     
     // Gunakan useMemo untuk memproses data hanya jika rilisData berubah
     const processedData = useMemo(() => prepareRilisData(rilisData), [rilisData]);
 
-    // Ambil semua nama unit unik (kunci numerik dari data, contoh: 'P1 BKS', 'P2 BKS')
-    // Asumsi: Kita ambil dari kunci di data[0], selain yang standar
+    // Ambil semua nama unit unik dari data (ini akan menjadi Legenda)
     const firstData = processedData[0] || {};
     const unitKeys = Object.keys(firstData).filter(key => 
         !['month', 'monthLabel', 'TOTAL_PRODUKSI', 'RKAP'].includes(key)
     );
 
-    if (!processedData || processedData.length === 0 || unitKeys.length === 0) {
+    if (!processedData || processedData.length === 0) {
         return (
             <div className="bg-white p-6 rounded-xl shadow-lg h-96 flex flex-col justify-center items-center">
                 <h3 className="text-xl font-semibold mb-4 text-gray-700">Rilis Produksi {groupName} (Tahun {selectedYear})</h3>
@@ -59,41 +105,6 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
         );
     }
     
-    // Custom Tooltip untuk menampilkan semua unit di bulan itu
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-white p-3 border border-gray-300 shadow-md rounded-lg text-sm">
-                    <p className="font-bold text-gray-800 mb-1">{label} {selectedYear}</p>
-                    {payload
-                        .filter(p => p.dataKey !== 'TOTAL_PRODUKSI')
-                        .map((p, index) => (
-                            <p key={`tooltip-${index}`} style={{ color: p.color }}>
-                                {p.name}: <span className="font-semibold">{p.value?.toLocaleString()} Ton</span>
-                            </p>
-                        ))}
-                    <p className="mt-2 pt-2 border-t border-gray-200 font-bold text-blue-700">
-                        Total: {payload.find(p => p.dataKey === 'TOTAL_PRODUKSI')?.value?.toLocaleString() || 0} Ton
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-    
-    // Custom Label untuk Line Chart (Total Produksi)
-    const CustomLineLabel = ({ x, y, value, name }) => {
-        if (name === "TOTAL_PRODUKSI" || name === "RKAP") {
-             return (
-                <text x={x} y={y - 10} dy={-4} fill="#000" fontSize={12} textAnchor="middle" fontWeight="bold">
-                    {value.toLocaleString()}
-                </text>
-            );
-        }
-        return null;
-    };
-    
-
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg">
             <h3 className="text-xl font-semibold mb-4 text-gray-700">Rilis Produksi {groupName} (Tahun {selectedYear})</h3>
@@ -105,7 +116,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                 > 
                     <CartesianGrid strokeDasharray="3 3" />
                     
-                    {/* Sumbu X: Bulan */}
+                    {/* Sumbu X: BULAN */}
                     <XAxis 
                         dataKey="monthLabel" 
                         style={{ fontSize: '12px' }}
@@ -122,20 +133,20 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                         domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 10000) * 10000]}
                     />
                     
-                    {/* Sumbu Y Kanan: Total Rilis (Line) - Opsional, bisa pakai sumbu kiri */}
+                    {/* Sumbu Y Kanan: Line (Total) - Dihilangkan atau Disembunyikan jika tidak digunakan */}
                     <YAxis 
                         yAxisId="right" 
                         orientation="right" 
                         stroke="#54A24B"
                         tickFormatter={(v) => v.toLocaleString()}
                         domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 50000) * 50000]}
-                        hide={true} // Sembunyikan sumbu kanan agar fokus pada sumbu kiri
+                        hide={true} 
                     />
                     
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip selectedYear={selectedYear} />} />
                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
                     
-                    {/* Render Bar untuk setiap Unit Kerja */}
+                    {/* Render Bar untuk setiap Unit Kerja (Disusun ke Samping - Grouped Bar) */}
                     {unitKeys.map((unit, index) => (
                         <Bar 
                             key={unit}
@@ -149,7 +160,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
 
                     {/* Line Chart untuk RKAP (Target) */}
                     <Line 
-                        yAxisId="left" // Menggunakan sumbu kiri
+                        yAxisId="right" // Menggunakan sumbu KANAN untuk skala target yang berbeda
                         type="monotone" 
                         dataKey="RKAP" 
                         stroke="#FF9800" // Oranye/Emas
@@ -162,7 +173,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                     
                      {/* Line Chart untuk TOTAL PRODUKSI per bulan */}
                     <Line 
-                        yAxisId="left" // Menggunakan sumbu kiri
+                        yAxisId="right" // Menggunakan sumbu KANAN untuk skala yang berbeda
                         type="monotone" 
                         dataKey="TOTAL_PRODUKSI" 
                         stroke="#636363" // Abu-abu gelap kontras
