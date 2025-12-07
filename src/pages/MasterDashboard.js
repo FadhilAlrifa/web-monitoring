@@ -125,9 +125,9 @@ const MasterDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
-                Ringkasan Rilis Produksi Bulanan
+                Rilis Produksi
             </h1>
-            <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup utama.</p>
+            <p className="text-gray-500 mb-8">Perbandingan target dan realisasi.</p>
 
             {/* Global Filters & Time Display (Hanya Tahun) */}
             <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-10">
@@ -135,7 +135,7 @@ const MasterDashboard = () => {
                     
                     {/* Display Periode Aktif */}
                     <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <Calendar size={18} className="text-purple-600" />
+                        <Calendar size={18} className="text-blue-500" />
                         <span className="mr-2">Tahun Aktif:</span>
                     </div>
                     
@@ -145,9 +145,6 @@ const MasterDashboard = () => {
                     </select>
                 </div>
             </div>
-            
-            {/* === CHART RILIS UTAMA (SUSUNAN VERTIKAL) === */}
-            <h3 className="text-xl font-semibold text-gray-700 mb-4 border-t pt-6">Visualisasi Agregasi ({selectedYear})</h3>
             
             {isLoading ? (
                 <p className="text-center p-10 text-blue-600 animate-pulse">Memuat data rilis bulanan...</p>
@@ -160,7 +157,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-red-50">
                              <TrendingUp size={24} className="text-red-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik (YTD)</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik</p>
                                  <h4 className="text-2xl font-extrabold text-red-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.pabrik))} <span className="text-lg font-semibold">TON</span>
                                  </h4>
@@ -179,7 +176,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-green-50">
                              <TrendingUp size={24} className="text-green-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan (YTD)</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan</p>
                                  <h4 className="text-2xl font-extrabold text-green-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.bks))} <span className="text-lg font-semibold">TON</span>
                                  </h4>
@@ -201,7 +198,7 @@ const MasterDashboard = () => {
                                 <div className="flex items-center gap-3">
                                     <TrendingUp size={24} className="text-indigo-600" />
                                     <div>
-                                        <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (YTD)</p>
+                                        <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant</p>
                                         <h4 className="text-2xl font-extrabold text-indigo-700">
                                             {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
                                         </h4>
@@ -210,7 +207,7 @@ const MasterDashboard = () => {
 
                                 {/* KANAN: Filter Unit Total */}
                                 <div className="flex flex-col items-end">
-                                    <p className="text-xs font-semibold text-gray-700 mb-1 whitespace-nowrap">Filter Unit Total (YTD):</p>
+                                    <p className="text-xs font-semibold text-gray-700 mb-1 whitespace-nowrap">Filter Unit Total:</p>
                                     <UnitSelector 
                                         onSelect={setSelectedPackingUnit} 
                                         selectedUnit={selectedPackingUnit} 
