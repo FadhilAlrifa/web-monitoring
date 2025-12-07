@@ -196,28 +196,35 @@ const MasterDashboard = () => {
                     <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
                          {/* Total Produksi Packing Plant */}
                          <div className="flex flex-col mb-4 p-3 rounded-lg bg-indigo-50">
-                            <div className="flex items-center gap-3">
-                                <TrendingUp size={24} className="text-indigo-600" />
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (YTD)</p>
-                                    <h4 className="text-2xl font-extrabold text-indigo-700">
-                                        {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
-                                    </h4>
+                            <div className="flex items-center gap-3 justify-between"> {/* Flex untuk merapikan baris pertama */}
+                                {/* KIRI: Total Agregat Grup */}
+                                <div className="flex items-center gap-3">
+                                    <TrendingUp size={24} className="text-indigo-600" />
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (YTD)</p>
+                                        <h4 className="text-2xl font-extrabold text-indigo-700">
+                                            {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
+                                        </h4>
+                                    </div>
+                                </div>
+
+                                {/* KANAN: Filter Unit Total */}
+                                <div className="flex flex-col items-end">
+                                    <p className="text-xs font-semibold text-gray-700 mb-1 whitespace-nowrap">Filter Unit Total (YTD):</p>
+                                    <UnitSelector 
+                                        onSelect={setSelectedPackingUnit} 
+                                        selectedUnit={selectedPackingUnit} 
+                                        allowedGroupName="Packing Plant" 
+                                        allUnits={allUnits} 
+                                    />
                                 </div>
                             </div>
 
-                            {/* SELECTOR BARU DI DALAM CARD PACKING PLANT */}
+                            {/* HASIL FILTER UNIT TERPILIH */}
                             <div className="mt-4 pt-3 border-t border-indigo-200">
-                                <p className="text-xs font-semibold text-gray-700 mb-1">Filter Unit Total Produksi (YTD):</p>
-                                <UnitSelector 
-                                    onSelect={setSelectedPackingUnit} 
-                                    selectedUnit={selectedPackingUnit} 
-                                    allowedGroupName="Packing Plant" 
-                                    allUnits={allUnits} 
-                                />
-                                <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
-                                    <p className="text-xs text-gray-600">Total YTD Unit Terpilih ({yearDisplay}):</p>
-                                    <p className="text-lg font-bold text-blue-600">{formatValue(packingUnitTotalYTD)} TON</p>
+                                <div className="flex justify-between items-center bg-white p-3 rounded-md shadow-inner">
+                                    <p className="text-sm font-medium text-gray-700">Total YTD Unit Terpilih ({yearDisplay}):</p>
+                                    <p className="text-xl font-bold text-blue-600">{formatValue(packingUnitTotalYTD)} TON</p>
                                 </div>
                             </div>
                          </div>
