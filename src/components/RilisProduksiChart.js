@@ -27,8 +27,9 @@ const CustomTooltip = ({ active, payload, label, selectedYear }) => {
             <div className="bg-white p-3 border border-gray-300 shadow-md rounded-lg text-sm">
                 <p className="font-bold text-gray-800 mb-1">{label} {selectedYear}</p>
                 {payload
-                    // Filter Bar (Unit)
+                    // Filter Bar (Unit) dan sort by value
                     .filter(p => p.dataKey !== 'TOTAL_PRODUKSI' && p.dataKey !== 'RKAP' && p.type === 'bar') 
+                    .sort((a, b) => b.value - a.value) // Sort descending by value
                     .map((p, index) => (
                         <p key={`tooltip-bar-${index}`} style={{ color: p.color }}>
                             {p.name}: <span className="font-semibold">{p.value?.toLocaleString()} Ton</span>
@@ -139,8 +140,11 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                         orientation="right" 
                         stroke="#54A24B"
                         tickFormatter={(v) => v.toLocaleString()}
-                        domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 50000) * 50000]}
-                        hide={true} 
+                        // Dinamis domain yang lebih besar untuk Total (Line)
+                        domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 50000) * 50000]} 
+                        // Tambahkan label di sini untuk sumbu kanan agar mudah dipahami
+                        label={{ value: 'Total Rilis Produksi (Ton)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fill: '#54A24B' } }}
+                        
                     />
                     
                     <Tooltip content={<CustomTooltip selectedYear={selectedYear} />} />
@@ -155,6 +159,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                             fill={UNIT_COLORS[index % UNIT_COLORS.length]}
                             barSize={15}
                             name={unit} // Nama Unit Kerja sebagai nama legenda
+                            // TIDAK ADA stackId agar Bar tidak bertumpuk (Grouped Bar)
                         />
                     ))}
 
@@ -167,7 +172,7 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
                         strokeDasharray="5 5" 
                         strokeWidth={3}
                         name="Target RKAP"
-                        dot={false}
+                        dot={{ r: 5, fill: '#FF9800', stroke: '#FFA000', strokeWidth: 2 }} // Titik Target
                         label={<CustomLineLabel name="RKAP" />}
                     />
                     
