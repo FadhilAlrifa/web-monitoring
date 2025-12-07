@@ -80,7 +80,7 @@ const prepareRilisData = (data) => {
         return {
             ...monthData,
             TOTAL_PRODUKSI: totalBulanan, // Total produksi per bulan (untuk Line Chart)
-            RKAP: parseFloat(monthData.RKAP) || 10000 // Pastikan RKAP tersedia
+            RKAP: parseFloat(monthData.RKAP) || 0 // Pastikan RKAP tersedia
         };
     });
 };

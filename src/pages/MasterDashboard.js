@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, TrendingUp } from 'lucide-react'; // Hanya menggunakan Calendar untuk filter
-
-// Import komponen chart khusus yang masih digunakan (Rilis)
+import UnitSelector from '../components/UnitSelector'; // Diperlukan untuk filter baru
 import RilisProduksiChart from '../components/RilisProduksiChart'; 
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
-// UnitSelector tidak diperlukan di sini karena kita tidak memilih unit spesifik
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -27,6 +25,10 @@ const MasterDashboard = () => {
         packing:     [],
     });
 
+    // STATE BARU untuk total spesifik Unit Packing Plant
+    const [packingUnitTotal, setPackingUnitTotal] = useState(0); 
+    const [selectedPackingUnit, setSelectedPackingUnit] = useState(null); 
+    
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     
@@ -46,41 +48,51 @@ const MasterDashboard = () => {
             console.error(`Error fetching Rilis data for ${moduleKey}:`, err);
         }
     };
-
-    // EFFECT UTAMA: Dipicu oleh filter Tahun
-    useEffect(() => {
-        setIsLoading(true);
-        // Mengambil Rilis Pabrik
-        fetchRilisData('pabrik', 'produksi/pabrik');
-        // Mengambil Rilis BKS
-        fetchRilisData('bks', 'produksi/bks');
-        // Mengambil Rilis Packing Plant
-        fetchRilisData('packing', 'packing-plant');
-
-        setIsLoading(false);
-    }, [selectedYear]); 
-
-    // --- RENDER HELPERS ---
-    const monthDisplay = `${monthNames[today.getMonth()]} ${selectedYear}`;
     
-    const formatValue = (value) => {
-        if (value === 'N/A') return value;
-        const numericValue = parseFloat(value);
-        return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    // --- FUNGSI BARU: FETCH TOTAL PRODUKSI SPESIFIK UNIT (Packing Plant) ---
+    const fetchSpecificTotal = async (unitId, year) => {
+        if (!unitId) return setPackingUnitTotal(0);
+
+        try {
+            // Kita akan menggunakan endpoint dashboard Packing Plant yang sudah ada, 
+            // tetapi hanya mengambil total MTD dari responsnya.
+            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; // Menggunakan Month=1 sebagai dummy
+            const res = await axios.get(endpoint);
+            
+            // Asumsi: Backend mengirim totalProductionMTD
+            const totalMTD = res.data.totalProductionMTD || 0; 
+            
+            setPackingUnitTotal(totalMTD);
+
+        } catch (err) {
+            console.error(`Error fetching total for Unit ${unitId}:`, err);
+            setPackingUnitTotal(0);
+        }
     };
 
-    // FUNGSI BARU: Menghitung Total Produksi dari Data Rilis
+
+    // EFFECT 1: Mengambil data Rilis (Global)
+    useEffect(() => {
+        setIsLoading(true);
+        fetchRilisData('pabrik', 'produksi/pabrik');
+        fetchRilisData('bks', 'produksi/bks');
+        fetchRilisData('packing', 'packing-plant');
+        setIsLoading(false);
+    }, [selectedYear]); 
+    
+    // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit atau Tahun berubah)
+    useEffect(() => {
+        fetchSpecificTotal(selectedPackingUnit, selectedYear);
+    }, [selectedPackingUnit, selectedYear]); 
+
+    // --- RENDER HELPERS ---
     const calculateTotalRilis = (data) => {
         if (!data || data.length === 0) return 0;
-        
-        // Asumsi: data memiliki struktur [{monthLabel: 'JAN', UnitA: 100, UnitB: 200}, ...]
-        // Kita perlu menjumlahkan semua nilai Ton dari semua unit di semua bulan.
         
         let total = 0;
         data.forEach(monthData => {
             Object.keys(monthData).forEach(key => {
-                // Hanya jumlahkan key yang bukan 'month' atau 'monthLabel'
-                if (key !== 'month' && key !== 'monthLabel') {
+                if (key !== 'month' && key !== 'monthLabel' && key !== 'RKAP' && key !== 'TOTAL_PRODUKSI') {
                     total += parseFloat(monthData[key]) || 0;
                 }
             });
@@ -88,13 +100,21 @@ const MasterDashboard = () => {
         return total;
     };
     
+    const formatValue = (value) => {
+        if (value === 'N/A') return value;
+        const numericValue = parseFloat(value);
+        return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    };
+
+    const monthDisplay = `${monthNames[today.getMonth()]} ${selectedYear}`;
+    
     // --- RENDERING UTAMA ---
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
-                📊 Rilis Produksi 
+                Ringkasan Rilis Produksi Bulanan
             </h1>
-            <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup .</p>
+            <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup utama.</p>
 
             {/* Global Filters & Time Display (Hanya Tahun) */}
             <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-10">
@@ -113,6 +133,9 @@ const MasterDashboard = () => {
                 </div>
             </div>
             
+            {/* === CHART RILIS UTAMA (SUSUNAN VERTIKAL) === */}
+            <h3 className="text-xl font-semibold text-gray-700 mb-4 border-t pt-6">Visualisasi Agregasi ({selectedYear})</h3>
+            
             {isLoading ? (
                 <p className="text-center p-10 text-blue-600 animate-pulse">Memuat data rilis bulanan...</p>
             ) : (
@@ -124,7 +147,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-red-50">
                              <TrendingUp size={24} className="text-red-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik (Agregat Tahun)</p>
                                  <h4 className="text-2xl font-extrabold text-red-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.pabrik))} <span className="text-lg font-semibold">TON</span>
                                  </h4>
@@ -143,7 +166,7 @@ const MasterDashboard = () => {
                          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-green-50">
                              <TrendingUp size={24} className="text-green-600" />
                              <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan</p>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan (Agregat Tahun)</p>
                                  <h4 className="text-2xl font-extrabold text-green-700">
                                      {formatValue(calculateTotalRilis(rilisDataStates.bks))} <span className="text-lg font-semibold">TON</span>
                                  </h4>
@@ -156,18 +179,35 @@ const MasterDashboard = () => {
                          />
                     </div>
                     
-                    {/* 3. Rilis Packing Plant */}
+                    {/* 3. Rilis Packing Plant (DENGAN FILTER PER UNIT) */}
                     <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
                          {/* Total Produksi Packing Plant */}
-                         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-indigo-50">
-                             <TrendingUp size={24} className="text-indigo-600" />
-                             <div>
-                                 <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (Agregat)</p>
-                                 <h4 className="text-2xl font-extrabold text-indigo-700">
-                                     {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
-                                 </h4>
-                             </div>
+                         <div className="flex flex-col mb-4 p-3 rounded-lg bg-indigo-50">
+                            <div className="flex items-center gap-3">
+                                <TrendingUp size={24} className="text-indigo-600" />
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (Agregat Tahun)</p>
+                                    <h4 className="text-2xl font-extrabold text-indigo-700">
+                                        {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
+                                    </h4>
+                                </div>
+                            </div>
+
+                            {/* SELECTOR BARU DI DALAM CARD PACKING PLANT */}
+                            <div className="mt-4 pt-3 border-t border-indigo-200">
+                                <p className="text-xs font-semibold text-gray-700 mb-1">Filter Unit Total Produksi:</p>
+                                <UnitSelector 
+                                    onSelect={setSelectedPackingUnit} 
+                                    selectedUnit={selectedPackingUnit} 
+                                    allowedGroupName="Packing Plant" 
+                                />
+                                <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
+                                    <p className="text-xs text-gray-600">Total MTD Unit Terpilih:</p>
+                                    <p className="text-lg font-bold text-blue-600">{formatValue(packingUnitTotal)} TON</p>
+                                </div>
+                            </div>
                          </div>
+
                          <RilisPackingPlantChart 
                              rilisData={rilisDataStates.packing} 
                              selectedYear={selectedYear} 
