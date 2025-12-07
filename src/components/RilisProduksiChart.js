@@ -91,12 +91,22 @@ const RilisProduksiChart = ({ rilisData, selectedYear, groupName }) => {
     // Gunakan useMemo untuk memproses data hanya jika rilisData berubah
     const processedData = useMemo(() => prepareRilisData(rilisData), [rilisData]);
 
-    // Ambil semua nama unit unik dari data (ini akan menjadi Legenda)
-    const firstData = processedData[0] || {};
-    const unitKeys = Object.keys(firstData).filter(key => 
-        !['month', 'monthLabel', 'TOTAL_PRODUKSI', 'RKAP'].includes(key)
-    );
+    // PERBAIKAN: Ambil semua nama unit unik dari SELURUH data array
+    const allUnitKeys = useMemo(() => {
+        const keys = new Set();
+        processedData.forEach(item => {
+            Object.keys(item).forEach(key => {
+                // Hanya ambil kunci yang merupakan Unit Kerja
+                if (!['month', 'monthLabel', 'TOTAL_PRODUKSI', 'RKAP'].includes(key)) {
+                    keys.add(key);
+                }
+            });
+        });
+        return Array.from(keys);
+    }, [processedData]);
 
+    const unitKeys = allUnitKeys; // Ini adalah daftar unit kerja yang akan menjadi Legenda
+    
     if (!processedData || processedData.length === 0 || unitKeys.length === 0) {
         return (
             <div className="bg-white p-6 rounded-xl shadow-lg h-96 flex flex-col justify-center items-center">
