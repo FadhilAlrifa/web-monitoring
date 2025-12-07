@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, TrendingUp } from 'lucide-react'; // Hanya menggunakan Calendar untuk filter
-import UnitSelector from '../components/UnitSelector'; // Diperlukan untuk filter baru
+import { Calendar, TrendingUp } from 'lucide-react'; 
+import UnitSelector from '../components/UnitSelector'; 
 import RilisProduksiChart from '../components/RilisProduksiChart'; 
 import RilisPackingPlantChart from '../components/RilisPackingPlantChart'; 
 
@@ -15,7 +15,7 @@ const monthNames = [
 ];
 
 const MasterDashboard = () => {
-    // State Filter Global
+    // State Filter Global (Hanya Tahun)
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     
     // State Rilis Data
@@ -72,11 +72,11 @@ const MasterDashboard = () => {
         if (!unitId) return setPackingUnitTotal(0);
 
         try {
-            // Gunakan bulan dummy (1) karena backend akan menghitung YTD jika bulan diabaikan/diatur ke 1.
+            // Menggunakan bulan dummy (1) agar backend memicu logika YTD
             const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; 
             const res = await axios.get(endpoint);
             
-            // Menggunakan totalProductionMTD sebagai total Produksi Unit YTD
+            // Menggunakan totalProductionMTD dari respons sebagai total YTD
             const totalYTD = res.data.totalProductionMTD || 0; 
             
             setPackingUnitTotal(totalYTD);
@@ -90,16 +90,14 @@ const MasterDashboard = () => {
 
     // EFFECT 1: Mengambil data Rilis (Global)
     useEffect(() => {
-        setIsLoading(true);
         fetchRilisData('pabrik', 'produksi/pabrik');
         fetchRilisData('bks', 'produksi/bks');
         fetchRilisData('packing', 'packing-plant');
-        setIsLoading(false);
     }, [selectedYear]); 
     
     // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit atau Tahun berubah)
     useEffect(() => {
-        // Hanya panggil dengan unitId dan year
+        // Panggil fetchSpecificTotal hanya dengan unitId dan year
         fetchSpecificTotal(selectedPackingUnit, selectedYear); 
     }, [selectedPackingUnit, selectedYear]); 
 
@@ -124,7 +122,6 @@ const MasterDashboard = () => {
         return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
     };
 
-    // PERBAIKAN: monthDisplay disederhanakan menjadi yearDisplay
     const yearDisplay = `${selectedYear}`;
     
     // --- RENDERING UTAMA ---
@@ -144,8 +141,6 @@ const MasterDashboard = () => {
                         <Calendar size={18} className="text-purple-600" />
                         <span className="mr-2">Tahun Aktif:</span>
                     </div>
-                    
-                    {/* Selector Bulan DIHAPUS */}
                     
                     {/* Selector Tahun */}
                     <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:ring-2 focus:ring-purple-200">
@@ -221,7 +216,7 @@ const MasterDashboard = () => {
                                     onSelect={setSelectedPackingUnit} 
                                     selectedUnit={selectedPackingUnit} 
                                     allowedGroupName="Packing Plant" 
-                                    allUnits={allUnits} // <-- allUnits DI PASS KE SELECTOR
+                                    allUnits={allUnits} 
                                 />
                                 <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
                                     <p className="text-xs text-gray-600">Total YTD Unit Terpilih ({yearDisplay}):</p>
