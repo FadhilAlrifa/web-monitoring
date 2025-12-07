@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Calendar } from 'lucide-react'; // Hanya menggunakan Calendar untuk filter
+import { Calendar, TrendingUp } from 'lucide-react'; // Hanya menggunakan Calendar untuk filter
 
 // Import komponen chart khusus yang masih digunakan (Rilis)
 import RilisProduksiChart from '../components/RilisProduksiChart'; 
@@ -63,6 +63,31 @@ const MasterDashboard = () => {
     // --- RENDER HELPERS ---
     const monthDisplay = `${monthNames[today.getMonth()]} ${selectedYear}`;
     
+    const formatValue = (value) => {
+        if (value === 'N/A') return value;
+        const numericValue = parseFloat(value);
+        return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    };
+
+    // FUNGSI BARU: Menghitung Total Produksi dari Data Rilis
+    const calculateTotalRilis = (data) => {
+        if (!data || data.length === 0) return 0;
+        
+        // Asumsi: data memiliki struktur [{monthLabel: 'JAN', UnitA: 100, UnitB: 200}, ...]
+        // Kita perlu menjumlahkan semua nilai Ton dari semua unit di semua bulan.
+        
+        let total = 0;
+        data.forEach(monthData => {
+            Object.keys(monthData).forEach(key => {
+                // Hanya jumlahkan key yang bukan 'month' atau 'monthLabel'
+                if (key !== 'month' && key !== 'monthLabel') {
+                    total += parseFloat(monthData[key]) || 0;
+                }
+            });
+        });
+        return total;
+    };
+    
     // --- RENDERING UTAMA ---
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
@@ -94,11 +119,21 @@ const MasterDashboard = () => {
             {isLoading ? (
                 <p className="text-center p-10 text-blue-600 animate-pulse">Memuat data rilis bulanan...</p>
             ) : (
-                // PERBAIKAN: Mengganti lg:grid-cols-3 menjadi space-y-6 untuk susunan vertikal penuh
+                // Susunan Vertikal
                 <div className="space-y-6"> 
                     
                     {/* 1. Rilis Produksi Pabrik */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
+                    <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                         {/* Total Produksi Pabrik */}
+                         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-red-50">
+                             <TrendingUp size={24} className="text-red-600" />
+                             <div>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pabrik (Agregat)</p>
+                                 <h4 className="text-2xl font-extrabold text-red-700">
+                                     {formatValue(calculateTotalRilis(rilisDataStates.pabrik))} <span className="text-lg font-semibold">TON</span>
+                                 </h4>
+                             </div>
+                         </div>
                          <RilisProduksiChart 
                              rilisData={rilisDataStates.pabrik} 
                              selectedYear={selectedYear} 
@@ -107,7 +142,17 @@ const MasterDashboard = () => {
                     </div>
 
                     {/* 2. Rilis Produksi BKS (Pelabuhan) */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
+                    <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                         {/* Total Produksi BKS */}
+                         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-green-50">
+                             <TrendingUp size={24} className="text-green-600" />
+                             <div>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Pelabuhan (Agregat)</p>
+                                 <h4 className="text-2xl font-extrabold text-green-700">
+                                     {formatValue(calculateTotalRilis(rilisDataStates.bks))} <span className="text-lg font-semibold">TON</span>
+                                 </h4>
+                             </div>
+                         </div>
                          <RilisProduksiChart 
                              rilisData={rilisDataStates.bks} 
                              selectedYear={selectedYear} 
@@ -116,7 +161,17 @@ const MasterDashboard = () => {
                     </div>
                     
                     {/* 3. Rilis Packing Plant */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 w-full">
+                    <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                         {/* Total Produksi Packing Plant */}
+                         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-indigo-50">
+                             <TrendingUp size={24} className="text-indigo-600" />
+                             <div>
+                                 <p className="text-sm font-medium text-gray-600">Total Produksi Packing Plant (Agregat)</p>
+                                 <h4 className="text-2xl font-extrabold text-indigo-700">
+                                     {formatValue(calculateTotalRilis(rilisDataStates.packing))} <span className="text-lg font-semibold">TON</span>
+                                 </h4>
+                             </div>
+                         </div>
                          <RilisPackingPlantChart 
                              rilisData={rilisDataStates.packing} 
                              selectedYear={selectedYear} 
