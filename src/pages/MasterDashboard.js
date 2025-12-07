@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, TrendingUp } from 'lucide-react'; 
@@ -29,7 +29,7 @@ const MasterDashboard = () => {
     const [allUnits, setAllUnits] = useState([]);
     
     // STATE BARU untuk total spesifik Unit Packing Plant
-    const [packingUnitTotal, setPackingUnitTotal] = useState(0); 
+    // Tidak lagi menggunakan state ini, akan dihitung di useMemo
     const [selectedPackingUnit, setSelectedPackingUnit] = useState(null); 
     
     const [isLoading, setIsLoading] = useState(true);
@@ -67,41 +67,7 @@ const MasterDashboard = () => {
         }
     };
     
-    // --- FUNGSI BARU: FETCH TOTAL PRODUKSI SPESIFIK UNIT (YTD) ---
-    const fetchSpecificTotal = async (unitId, year) => { 
-        if (!unitId) return setPackingUnitTotal(0);
-
-        try {
-            // Menggunakan bulan dummy (1) agar backend memicu logika YTD
-            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; 
-            const res = await axios.get(endpoint);
-            
-            // Menggunakan totalProductionMTD dari respons sebagai total YTD
-            const totalYTD = res.data.totalProductionMTD || 0; 
-            
-            setPackingUnitTotal(totalYTD);
-
-        } catch (err) {
-            console.error(`Error fetching total for Unit ${unitId}:`, err);
-            setPackingUnitTotal(0);
-        }
-    };
-
-
-    // EFFECT 1: Mengambil data Rilis (Global)
-    useEffect(() => {
-        fetchRilisData('pabrik', 'produksi/pabrik');
-        fetchRilisData('bks', 'produksi/bks');
-        fetchRilisData('packing', 'packing-plant');
-    }, [selectedYear]); 
-    
-    // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit atau Tahun berubah)
-    useEffect(() => {
-        // Panggil fetchSpecificTotal hanya dengan unitId dan year
-        fetchSpecificTotal(selectedPackingUnit, selectedYear); 
-    }, [selectedPackingUnit, selectedYear]); 
-
-    // --- RENDER HELPERS ---
+    // --- FUNGSI AGREGASI HELPER ---
     const calculateTotalRilis = (data) => {
         if (!data || data.length === 0) return 0;
         
@@ -116,6 +82,37 @@ const MasterDashboard = () => {
         return total;
     };
     
+    // --- LOGIKA BARU: HITUNG TOTAL YTD UNIT TERPILIH DARI DATA RILIS YANG SUDAH ADA ---
+    const packingUnitTotalYTD = useMemo(() => {
+        if (!selectedPackingUnit || rilisDataStates.packing.length === 0) return 0;
+        
+        const unitName = allUnits.find(u => u.id_unit.toString() === selectedPackingUnit)?.nama_unit;
+        if (!unitName) return 0;
+
+        let total = 0;
+        
+        // Iterasi semua data bulanan (dari rilisDataStates.packing)
+        // dan jumlahkan nilai berdasarkan nama unit (yang menjadi key di data rilis)
+        rilisDataStates.packing.forEach(monthData => {
+             const unitValue = parseFloat(monthData[unitName]) || 0;
+             total += unitValue;
+        });
+
+        return total;
+    }, [selectedPackingUnit, rilisDataStates.packing, allUnits]);
+
+
+    // EFFECT 1: Mengambil data Rilis (Global)
+    useEffect(() => {
+        fetchRilisData('pabrik', 'produksi/pabrik');
+        fetchRilisData('bks', 'produksi/bks');
+        fetchRilisData('packing', 'packing-plant');
+    }, [selectedYear]); 
+    
+    // EFFECT 2: fetchSpecificTotal DIHAPUS karena sudah digantikan oleh useMemo di atas
+
+
+    // --- RENDER HELPERS ---
     const formatValue = (value) => {
         if (value === 'N/A') return value;
         const numericValue = parseFloat(value);
@@ -220,7 +217,7 @@ const MasterDashboard = () => {
                                 />
                                 <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
                                     <p className="text-xs text-gray-600">Total YTD Unit Terpilih ({yearDisplay}):</p>
-                                    <p className="text-lg font-bold text-blue-600">{formatValue(packingUnitTotal)} TON</p>
+                                    <p className="text-lg font-bold text-blue-600">{formatValue(packingUnitTotalYTD)} TON</p>
                                 </div>
                             </div>
                          </div>
