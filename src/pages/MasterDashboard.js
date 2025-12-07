@@ -16,6 +16,7 @@ const monthNames = [
 
 const MasterDashboard = () => {
     // State Filter Global
+    const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1); // <-- Month State
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     
     // State Rilis Data
@@ -26,7 +27,7 @@ const MasterDashboard = () => {
     });
 
     // STATE MASTER DATA BARU
-    const [allUnits, setAllUnits] = useState([]); // <--- HARUS ADA
+    const [allUnits, setAllUnits] = useState([]);
     
     // STATE BARU untuk total spesifik Unit Packing Plant
     const [packingUnitTotal, setPackingUnitTotal] = useState(0); 
@@ -41,9 +42,8 @@ const MasterDashboard = () => {
     useEffect(() => {
         const fetchMasterUnits = async () => {
             try {
-                // Fetch daftar semua unit kerja
                 const res = await axios.get(`${API_URL}/api/units`); 
-                setAllUnits(res.data); // Menyimpan daftar unit global
+                setAllUnits(res.data);
                 setIsLoading(false);
             } catch (err) {
                 console.error("Gagal fetch unit master:", err);
@@ -69,12 +69,12 @@ const MasterDashboard = () => {
     };
     
     // --- FUNGSI BARU: FETCH TOTAL PRODUKSI SPESIFIK UNIT (Packing Plant) ---
-    const fetchSpecificTotal = async (unitId, year) => {
+    const fetchSpecificTotal = async (unitId, year, month) => { // <-- TAMBAHKAN 'month'
         if (!unitId) return setPackingUnitTotal(0);
 
         try {
-            // Menggunakan Month=1 sebagai dummy karena MTD Total harus agregat bulanan.
-            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/1`; 
+            // KIRIM SEMUA FILTER (Unit, Tahun, Bulan)
+            const endpoint = `${API_URL}/api/packing-plant/dashboard/${unitId}/${year}/${month}`; // <-- GUNAKAN 'month'
             const res = await axios.get(endpoint);
             
             // Asumsi: Backend mengirim totalProductionMTD
@@ -91,15 +91,18 @@ const MasterDashboard = () => {
 
     // EFFECT 1: Mengambil data Rilis (Global)
     useEffect(() => {
+        setIsLoading(true);
         fetchRilisData('pabrik', 'produksi/pabrik');
         fetchRilisData('bks', 'produksi/bks');
         fetchRilisData('packing', 'packing-plant');
+        setIsLoading(false);
     }, [selectedYear]); 
     
-    // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit atau Tahun berubah)
+    // EFFECT 2: Mengambil Total Produksi per Unit (Saat Unit, Tahun, atau BULAN berubah)
     useEffect(() => {
-        fetchSpecificTotal(selectedPackingUnit, selectedYear);
-    }, [selectedPackingUnit, selectedYear]); 
+        // PERBAIKAN: Masukkan selectedMonth ke dalam fetch
+        fetchSpecificTotal(selectedPackingUnit, selectedYear, selectedMonth); // <-- KIRIM BULAN
+    }, [selectedPackingUnit, selectedYear, selectedMonth]); // <-- TAMBAHKAN selectedMonth DI DEPENDENCY
 
     // --- RENDER HELPERS ---
     const calculateTotalRilis = (data) => {
@@ -122,7 +125,7 @@ const MasterDashboard = () => {
         return isNaN(numericValue) ? 0 : numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
     };
 
-    const monthDisplay = `${monthNames[today.getMonth()]} ${selectedYear}`;
+    const monthDisplay = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
     
     // --- RENDERING UTAMA ---
     return (
@@ -132,15 +135,20 @@ const MasterDashboard = () => {
             </h1>
             <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup utama.</p>
 
-            {/* Global Filters & Time Display (Hanya Tahun) */}
+            {/* Global Filters & Time Display */}
             <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-10">
                 <div className="flex flex-wrap gap-4 items-center">
                     
                     {/* Display Periode Aktif */}
                     <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                         <Calendar size={18} className="text-purple-600" />
-                        <span className="mr-2">Tahun Aktif:</span>
+                        <span className="mr-2">Periode Aktif:</span>
                     </div>
+                    
+                    {/* Selector Bulan (Diperlukan untuk filtering MTD Unit) */}
+                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:ring-2 focus:ring-purple-200">
+                        {monthNames.map((name, index) => (<option key={index + 1} value={index + 1}>{name}</option>))}
+                    </select>
                     
                     {/* Selector Tahun */}
                     <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 transition-shadow focus:ring-2 focus:ring-purple-200">
@@ -211,14 +219,16 @@ const MasterDashboard = () => {
 
                             {/* SELECTOR BARU DI DALAM CARD PACKING PLANT */}
                             <div className="mt-4 pt-3 border-t border-indigo-200">
-                                <p className="text-xs font-semibold text-gray-700 mb-1">Filter Unit Total Produksi:</p>
+                                <p className="text-xs font-semibold text-gray-700 mb-1">Filter Unit Total Produksi (MTD):</p>
                                 <UnitSelector 
                                     onSelect={setSelectedPackingUnit} 
                                     selectedUnit={selectedPackingUnit} 
                                     allowedGroupName="Packing Plant" 
+                                    // Perbaikan: Passing allUnits ke UnitSelector agar bisa menampilkan list
+                                    allUnits={allUnits} 
                                 />
                                 <div className="mt-3 bg-white p-3 rounded-md shadow-inner">
-                                    <p className="text-xs text-gray-600">Total MTD Unit Terpilih:</p>
+                                    <p className="text-xs text-gray-600">Total MTD Unit Terpilih ({monthNames[selectedMonth - 1]} {selectedYear}):</p>
                                     <p className="text-lg font-bold text-blue-600">{formatValue(packingUnitTotal)} TON</p>
                                 </div>
                             </div>
