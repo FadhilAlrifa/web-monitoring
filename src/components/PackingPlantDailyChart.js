@@ -19,7 +19,7 @@ const PackingPlantDailyChart = ({ dailyReport }) => {
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">📊 Produksi Harian Packing Plant</h3>
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">Produksi Harian Packing Plant</h3>
 
             <ResponsiveContainer width="100%" height={420}>
                 <ComposedChart

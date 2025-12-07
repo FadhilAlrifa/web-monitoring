@@ -92,7 +92,7 @@ const MasterDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
-                Ringkasan Rilis Produksi Bulanan
+                📊 Rilis Produksi 
             </h1>
             <p className="text-gray-500 mb-8">Perbandingan kinerja tahunan antar grup utama.</p>
 
