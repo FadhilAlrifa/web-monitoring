@@ -14,13 +14,9 @@ const monthColors = {
 };
 
 const monthNamesAbbr = [
-    "MEI", "APR", "DES", "FEB", "SEP", "JUL", 
-    "JUN", "JAN", "DES", "NOV", "OKT", "AGU"
+    "JAN", "FEB", "MAR", "APR", "MEI", "JUN", 
+    "JUL", "AGU", "SEP", "OKT", "NOV", "DES"
 ];
-// const monthNamesAbbr = [
-//     "JAN", "FEB", "MAR", "APR", "MEI", "JUN", 
-//     "JUL", "AGU", "SEP", "OKT", "NOV", "DES"
-// ];
 // Custom Label untuk Line Chart (Total Produksi)
 const CustomLineLabel = ({ x, y, value }) => {
     if (value && value > 0) {
@@ -133,7 +129,22 @@ const RilisPackingPlantChart = ({ rilisData, selectedYear }) => {
                     />
                     
                     <Tooltip /> {/* Gunakan Tooltip default yang lebih baik dengan data pivot */}
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                    <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        payload={monthNamesAbbr.map((month) => ({
+                            id: month,
+                            type: "square",
+                            value: month,
+                            color: monthColors[month] || monthColors.DEFAULT
+                        })).concat([
+                            {
+                                id: "TOTAL_PRODUKSI",
+                                type: "line",
+                                value: "TOTAL",
+                                color: "#9D755D"
+                            }
+                        ])}
+                    />
                     
                     {/* Render Bar untuk setiap bulan */}
                     {monthlyKeys.map((month, index) => (
@@ -143,6 +154,7 @@ const RilisPackingPlantChart = ({ rilisData, selectedYear }) => {
                             dataKey={month} // JAN, FEB, MAR...
                             fill={monthColors[month] || monthColors.DEFAULT}
                             name={month}
+                            // order={index}
                         />
                     ))}
 
