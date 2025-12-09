@@ -4,7 +4,7 @@ import {
     CartesianGrid, Line, LabelList, Label
 } from 'recharts';
 
-// Warna yang konsisten untuk bulan (Ganti warna unit sebelumnya dengan warna bulan)
+// Warna yang konsisten untuk bulan
 const MONTH_COLORS = {
     JAN: '#4C78A8', FEB: '#F58518', MAR: '#E45756', APR: '#72B7B2',
     MEI: '#54A24B', JUN: '#EECA3B', JUL: '#B279A2', AGU: '#FF9DA7',
@@ -13,23 +13,20 @@ const MONTH_COLORS = {
 };
 
 const monthNamesAbbr = [
-    "JAN", "FEB", "MAR", "APR", "MEI", "JUN", 
+    "JAN", "FEB", "MAR", "APR", "MEI", "JUN",
     "JUL", "AGU", "SEP", "OKT", "NOV", "DES"
 ];
 
 // Custom Tooltip Content
 const CustomTooltip = ({ active, payload, label, selectedYear }) => {
     if (active && payload && payload.length) {
-        // Find total line and target line
         const totalLine = payload.find(p => p.dataKey === 'TOTAL_PRODUKSI');
         const targetLine = payload.find(p => p.dataKey === 'RKAP');
-        
-        // Filter out non-month dataKeys and Total/RKAP lines
+
         const monthPayload = payload
             .filter(p => monthNamesAbbr.includes(p.dataKey))
-            // TIDAK PERLU SORTING DI SINI karena sudah diurutkan JAN-DES
             .sort((a, b) => monthNamesAbbr.indexOf(a.dataKey) - monthNamesAbbr.indexOf(b.dataKey));
-        
+
         return (
             <div className="bg-white p-3 border border-gray-300 shadow-md rounded-lg text-sm">
                 <p className="font-bold text-gray-800 mb-1">Unit: {label} ({selectedYear})</p>
@@ -38,8 +35,7 @@ const CustomTooltip = ({ active, payload, label, selectedYear }) => {
                         {p.name}: <span className="font-semibold">{p.value?.toLocaleString()} Ton</span>
                     </p>
                 ))}
-                
-                {/* Total and Target Lines */}
+
                 {(totalLine || targetLine) && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                         {totalLine && <p className="font-bold text-gray-700">Total YTD: {totalLine.value?.toLocaleString()} Ton</p>}
@@ -52,10 +48,9 @@ const CustomTooltip = ({ active, payload, label, selectedYear }) => {
     return null;
 };
 
-// Custom Label untuk Line Chart (Total Produksi & RKAP)
-const CustomLineLabel = ({ x, y, value, name }) => {
+const CustomLineLabel = ({ x, y, value }) => {
     if (value && value > 0) {
-         return (
+        return (
             <text x={x} y={y - 10} dy={-4} fill="#000" fontSize={12} textAnchor="middle" fontWeight="bold">
                 {value.toLocaleString()}
             </text>
@@ -64,64 +59,54 @@ const CustomLineLabel = ({ x, y, value, name }) => {
     return null;
 };
 
-
-// --- FUNGSI PIVOTING DATA BARU (Membuat Unit jadi Sumbu X, Bulan jadi Bar) ---
+// Pivot Data
 const pivotRilisData = (data) => {
-    // 1. Dapatkan semua nama unit unik (Unit Kerja)
     const unitNames = [...new Set(data.map(item => item.nama_unit))];
-
     const pivotedMap = new Map();
 
-    // 2. Inisialisasi map dengan UnitName sebagai kunci
     unitNames.forEach(unit => {
         const entry = { unitName: unit, TOTAL_PRODUKSI: 0, RKAP: 0 };
-        monthNamesAbbr.forEach(month => {
-            entry[month] = 0; // Inisialisasi semua bulan ke 0
-        });
+        monthNamesAbbr.forEach(month => (entry[month] = 0));
         pivotedMap.set(unit, entry);
     });
 
-    // 3. Isi data bulanan dan hitung total
     data.forEach(monthRow => {
         const unit = monthRow.nama_unit;
         const monthAbbr = monthNamesAbbr[monthRow.month - 1];
         const value = parseFloat(monthRow.total_muat_ton) || 0;
-        const target = parseFloat(monthRow.target) || 0; // Ambil target dari baris data
+        const target = parseFloat(monthRow.target) || 0;
 
         if (pivotedMap.has(unit)) {
             const unitEntry = pivotedMap.get(unit);
-            
             unitEntry[monthAbbr] = value;
             unitEntry.TOTAL_PRODUKSI += value;
 
-            // ASUMSI: Target RKAP sama setiap bulan. Kita hanya ambil target dari baris data pertama.
             if (unitEntry.RKAP === 0) {
-                 unitEntry.RKAP = target; 
+                unitEntry.RKAP = target;
             }
         }
     });
 
-    // 4. Konversi ke array dan sort berdasarkan total produksi
     const finalArray = Array.from(pivotedMap.values());
-    finalArray.sort((a, b) => b.TOTAL_PRODUKSI - a.TOTAL_PRODUKSI); // Sort descending
+    finalArray.sort((a, b) => b.TOTAL_PRODUKSI - a.TOTAL_PRODUKSI);
 
     return finalArray;
 };
 
-
 const RilisPackingPlantChart = ({ rilisData, selectedYear, groupName }) => {
-    
-    // Gunakan useMemo untuk memproses data hanya jika rilisData berubah
-    // Data yang masuk di sini adalah array per bulan, misal: [{month:1, nama_unit:'A', total_muat_ton: 100}, ...]
     const pivotedData = useMemo(() => pivotRilisData(rilisData), [rilisData]);
 
-    // Kunci Bar sekarang adalah Bulan (JAN, FEB, MAR...)
-    const monthlyKeys = monthNamesAbbr; 
+    const monthlyKeys = monthNamesAbbr;
 
-    // Kunci Sumbu X adalah Unit Name
-    const unitKeys = pivotedData.map(d => d.unitName);
+    // === NEW: Legend Bulan Berurutan ===
+    const customLegendPayload = monthNamesAbbr.map(month => ({
+        value: month,
+        type: "square",
+        id: month,
+        color: MONTH_COLORS[month] || MONTH_COLORS.DEFAULT
+    }));
 
-    if (!pivotedData || pivotedData.length === 0 || unitKeys.length === 0) {
+    if (!pivotedData || pivotedData.length === 0) {
         return (
             <div className="bg-white p-6 rounded-xl shadow-lg h-96 flex flex-col justify-center items-center">
                 <h3 className="text-xl font-semibold mb-4 text-gray-700">Rilis Produksi {groupName} (Tahun {selectedYear})</h3>
@@ -129,94 +114,88 @@ const RilisPackingPlantChart = ({ rilisData, selectedYear, groupName }) => {
             </div>
         );
     }
-    
+
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg">
             <h3 className="text-xl font-semibold mb-4 text-gray-700">Rilis Produksi {groupName} (Tahun {selectedYear})</h3>
-            
+
             <ResponsiveContainer width="100%" height={500}>
-                <ComposedChart 
+                <ComposedChart
                     data={pivotedData}
                     margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
-                    barGap={2} 
-                > 
+                    barGap={2}
+                >
                     <CartesianGrid strokeDasharray="3 3" />
-                    
-                    {/* Sumbu X: NAMA UNIT KERJA */}
-                    <XAxis 
-                        dataKey="unitName" // Sumbu X adalah Unit Name
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={100} 
-                        interval={0} 
+
+                    <XAxis
+                        dataKey="unitName"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        interval={0}
                         style={{ fontSize: '12px' }}
                     />
-                    
-                    {/* Sumbu Y Kiri: Rilis Produksi (Bar) */}
-                    <YAxis 
-                        yAxisId="left" 
-                        orientation="left" 
+
+                    <YAxis
+                        yAxisId="left"
+                        orientation="left"
                         stroke="#8884d8"
-                        label={{ value: 'Rilis Produksi (Ton)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                        label={{ value: 'Rilis Produksi (Ton)', angle: -90, position: 'insideLeft' }}
                         tickFormatter={(v) => v.toLocaleString()}
-                        // Dinamis domain dari data total bulanan
                         domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 10000) * 10000]}
                     />
-                    
-                    {/* Sumbu Y Kanan: Total dan Target (Line) */}
-                    <YAxis 
-                        yAxisId="right" 
-                        orientation="right" 
+
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
                         stroke="#54A24B"
                         tickFormatter={(v) => v.toLocaleString()}
-                        // Domain lebih besar untuk Line Chart
-                        domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 50000) * 50000]} 
-                        label={{ value: 'Total Rilis Produksi (Ton)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fill: '#54A24B' } }}
+                        domain={[0, (dataMax) => Math.ceil(dataMax * 1.1 / 50000) * 50000]}
+                        label={{ value: 'Total Rilis Produksi (Ton)', angle: 90, position: 'insideRight' }}
                     />
-                    
-                    {/* Menggunakan Tooltip default yang lebih baik dengan data pivot */}
-                    <Tooltip content={({ active, payload, label }) => <CustomTooltip active={active} payload={payload} label={label} selectedYear={selectedYear} />} />
-                    
-                    {/* LEGEND: BULAN (Berurut JAN - DES) */}
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                    
-                    {/* Render Bar untuk setiap BULAN (Grouped Bar) */}
-                    {/* Urutan Bar harus sesuai dengan monthNamesAbbr (JAN - DES) */}
-                    {monthlyKeys.map((month, index) => (
-                        <Bar 
+
+                    <Tooltip content={({ active, payload, label }) => (
+                        <CustomTooltip active={active} payload={payload} label={label} selectedYear={selectedYear} />
+                    )} />
+
+                    {/* === Legend Baru (Urut JAN → DES) === */}
+                    <Legend
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        payload={customLegendPayload}
+                    />
+
+                    {monthlyKeys.map(month => (
+                        <Bar
                             key={month}
                             yAxisId="left"
-                            dataKey={month} // Bulan sebagai dataKey
-                            fill={MONTH_COLORS[month] || MONTH_COLORS.DEFAULT} // Gunakan MONTH_COLORS
+                            dataKey={month}
+                            fill={MONTH_COLORS[month] || MONTH_COLORS.DEFAULT}
                             barSize={15}
-                            name={month} // Bulan sebagai nama legenda
-                            // TIDAK ADA stackId agar Bar tidak bertumpuk (Grouped Bar)
+                            name={month}
                         />
                     ))}
 
-                    {/* Line Chart untuk RKAP (Target) */}
-                    <Line 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="RKAP" 
-                        stroke="#FF9800" 
-                        strokeDasharray="5 5" 
+                    <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="RKAP"
+                        stroke="#FF9800"
+                        strokeDasharray="5 5"
                         strokeWidth={3}
                         name="Target RKAP"
-                        dot={{ r: 5, fill: '#FF9800', stroke: '#FFA000', strokeWidth: 2 }} // Titik Target
-                        label={<CustomLineLabel name="RKAP" />}
+                        dot={{ r: 5, fill: '#FF9800', stroke: '#FFA000', strokeWidth: 2 }}
+                        label={<CustomLineLabel />}
                     />
-                    
-                     {/* Line Chart untuk TOTAL PRODUKSI Tahunan per Unit */}
-                    <Line 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="TOTAL_PRODUKSI" 
-                        stroke="#636363" 
+
+                    <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="TOTAL_PRODUKSI"
+                        stroke="#636363"
                         strokeWidth={2}
-                        dot={{ r: 4, fill: '#636363', stroke: '#000', strokeWidth: 1 }} 
+                        dot={{ r: 4, fill: '#636363', stroke: '#000', strokeWidth: 1 }}
                         name="TOTAL YTD"
-                        label={<CustomLineLabel name="TOTAL_PRODUKSI" />}
+                        label={<CustomLineLabel />}
                     />
 
                 </ComposedChart>
