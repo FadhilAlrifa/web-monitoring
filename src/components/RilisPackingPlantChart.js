@@ -136,13 +136,15 @@ const RilisPackingPlantChart = ({ rilisData, selectedYear }) => {
                                 id: month,
                                 type: "square",
                                 value: month,
-                                color: monthColors[month] || monthColors.DEFAULT
+                                color: monthColors[month] || monthColors.DEFAULT,
+                                payload: {}
                             })),
                             {
                                 id: "TOTAL",
                                 type: "line",
                                 value: "TOTAL",
-                                color: "#9D755D"
+                                color: "#9D755D",
+                                payload: {}
                             }
                         ]}
                     />
