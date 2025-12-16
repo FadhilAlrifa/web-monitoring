@@ -53,6 +53,35 @@ const PemuatanCrudPage = () => {
         }
         return filtered;
     }, [laporan, filterUnitId, filterDate, units]);
+    const exportToCSV = () => {
+        if (filteredLaporan.length === 0) {
+            return alert("Tidak ada data untuk diekspor.");
+        }
+        
+        const headers = ["Tanggal", "Unit Kerja", "Target (Ton)", "Ton Muat (Ton)"];
+        
+        const csvRows = filteredLaporan.map(item => {
+            const unitName = units.find(u => u.id_unit.toString() === item.id_unit.toString())?.nama_unit || 'N/A';
+            const dateObj = new Date(item.tanggal);
+            const formattedDate = dateObj.toLocaleDateString('en-GB'); 
+
+            return [
+                `"${formattedDate}"`,
+                `"${unitName}"`,
+                item.target,
+                item.ton_muat
+            ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Laporan_Pemuatan_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     // --- FETCH DATA ---
     const fetchMasterData = async () => {
@@ -243,6 +272,9 @@ const PemuatanCrudPage = () => {
                         {units.map(unit => <option key={unit.id_unit} value={unit.id_unit}>{unit.nama_unit}</option>)}
                     </select>
                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
+                    <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center">
+                        Download Document
+                    </button>
                 </div>
 
                 {isLoading ? <p>Memuat...</p> : (
