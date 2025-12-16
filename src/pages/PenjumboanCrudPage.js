@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_API_URL;
-
 const PAGE_GROUP_NAME = 'Penjumboan';
 const REPORT_API = 'penjumboan/laporan';
 
@@ -13,7 +12,7 @@ const initialFormData = {
     shift_1_ton: '', 
     shift_2_ton: '', 
     shift_3_ton: '', 
-    total_ton: '',   // Field sementara untuk input manual Total Polysling
+    total_ton: '',   // Field input manual khusus Total Polysling
     target: '650',
     id_laporan: null,
 };
@@ -32,32 +31,32 @@ const PenjumboanCrudPage = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // --- HELPER KONVERSI ---
-    const parseInputToFloat = (val) => {
+    // --- HELPER: Konversi string (koma/titik) ke float valid ---
+    const parseValue = (val) => {
         if (!val) return 0;
         const cleaned = val.toString().replace(',', '.');
         return parseFloat(cleaned) || 0;
     };
 
-    // Deteksi Unit Khusus
+    // Deteksi Nama Unit Kerja
     const selectedUnitName = useMemo(() => {
         return units.find(u => u.id_unit.toString() === formData.id_unit)?.nama_unit || '';
     }, [formData.id_unit, units]);
     
     const isTotalPolysling = selectedUnitName === 'Total Polysling';
 
-    // Perhitungan Total Produksi Live
+    // Perhitungan Total Produksi Otomatis
     const totalProduksiDisplay = useMemo(() => {
         if (isTotalPolysling) {
-            return parseInputToFloat(formData.total_ton);
+            return parseValue(formData.total_ton);
         } else {
-            return parseInputToFloat(formData.shift_1_ton) +
-                   parseInputToFloat(formData.shift_2_ton) +
-                   parseInputToFloat(formData.shift_3_ton);
+            return parseValue(formData.shift_1_ton) +
+                   parseValue(formData.shift_2_ton) +
+                   parseValue(formData.shift_3_ton);
         }
     }, [formData, isTotalPolysling]);
 
-    // --- FILTERING TABEL ---
+    // --- LOGIKA FILTER TABEL ---
     const filteredLaporan = useMemo(() => {
         if (!laporan) return [];
         let filtered = laporan;
@@ -105,8 +104,15 @@ const PenjumboanCrudPage = () => {
     // --- HANDLERS ---
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Izinkan angka, koma, dan titik di state sebagai string
-        setFormData(prev => ({ ...prev, [name]: value }));
+        // Validasi: Hanya izinkan angka, koma, dan satu titik
+        if (name.endsWith('_ton') || name === 'target' || name === 'total_ton') {
+            const regex = /^[0-9.,]*$/;
+            if (value === '' || regex.test(value)) {
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -116,17 +122,17 @@ const PenjumboanCrudPage = () => {
 
         if (!formData.id_unit) return setError("Silakan pilih Unit Kerja.");
 
-        // KONVERSI AKHIR KE DATABASE (Ubah koma jadi titik, tipe data float)
+        // KONVERSI AKHIR UNTUK PAYLOAD DATABASE
         const payload = {
             ...formData,
-            shift_1_ton: isTotalPolysling ? 0 : parseInputToFloat(formData.shift_1_ton),
-            shift_2_ton: isTotalPolysling ? 0 : parseInputToFloat(formData.shift_2_ton),
-            shift_3_ton: isTotalPolysling ? 0 : parseInputToFloat(formData.shift_3_ton),
+            shift_1_ton: isTotalPolysling ? 0 : parseValue(formData.shift_1_ton),
+            shift_2_ton: isTotalPolysling ? 0 : parseValue(formData.shift_2_ton),
+            shift_3_ton: isTotalPolysling ? 0 : parseValue(formData.shift_3_ton),
             total_produksi: totalProduksiDisplay,
-            target: parseInputToFloat(formData.target),
+            target: parseValue(formData.target),
         };
 
-        // Bersihkan field temporary sebelum kirim
+        // Hapus field temporary react sebelum kirim ke backend
         delete payload.total_ton;
 
         try {
@@ -150,7 +156,7 @@ const PenjumboanCrudPage = () => {
             ...item,
             tanggal: item.tanggal.split('T')[0],
             id_unit: item.id_unit.toString(),
-            // Kembalikan titik ke koma untuk kenyamanan user saat edit
+            // Konversi titik ke koma agar tampilan edit sesuai format lokal
             shift_1_ton: item.shift_1_ton.toString().replace('.', ','),
             shift_2_ton: item.shift_2_ton.toString().replace('.', ','),
             shift_3_ton: item.shift_3_ton.toString().replace('.', ','),
@@ -165,30 +171,13 @@ const PenjumboanCrudPage = () => {
         if (window.confirm('Hapus laporan ini?')) {
             try {
                 await axios.delete(`${API_URL}/api/${REPORT_API}/${id}`);
-                setSuccessMessage('Terhapus!');
+                setSuccessMessage('Laporan dihapus.');
                 fetchLaporan();
-            } catch (err) { setError('Gagal hapus.'); }
+            } catch (err) { setError('Gagal menghapus.'); }
         }
     };
 
     const getUnitName = (id) => units.find(u => u.id_unit.toString() === id.toString())?.nama_unit || 'N/A';
-
-    // RENDER INPUT TEXT AGAR BISA MENGETIK KOMA
-    const renderNumericInput = (name, label) => (
-        <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">{label} (Ton)</label>
-            <input
-                type="text"
-                inputMode="decimal"
-                name={name}
-                value={formData[name]}
-                onChange={handleChange}
-                placeholder="0,00"
-                className="p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-            />
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-gray-50 p-4">
@@ -199,6 +188,7 @@ const PenjumboanCrudPage = () => {
             {successMessage && <div className="bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded mb-4">{successMessage}</div>}
             {error && <div className="bg-red-100 border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
+            {/* FORM INPUT SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-lg mb-10 border border-gray-200">
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -216,8 +206,8 @@ const PenjumboanCrudPage = () => {
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Target (Ton)</label>
-                            <input type="text" inputMode="decimal" name="target" value={formData.target} onChange={handleChange} className="p-2 border rounded-md" required />
+                            <label className="text-sm font-medium text-gray-700 mb-1">Target Harian (Ton)</label>
+                            <input type="text" inputMode="decimal" name="target" value={formData.target} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md" required />
                         </div>
                     </div>
 
@@ -227,19 +217,25 @@ const PenjumboanCrudPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         {isTotalPolysling ? (
-                            renderNumericInput('total_ton', 'Total Produksi')
+                            <div className="flex flex-col">
+                                <label className="text-sm font-medium text-gray-700 mb-1">Total Produksi (Ton)</label>
+                                <input type="text" inputMode="decimal" name="total_ton" value={formData.total_ton} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md focus:ring-blue-500" required />
+                            </div>
                         ) : (
                             <>
-                                {renderNumericInput('shift_1_ton', 'Shift 1')}
-                                {renderNumericInput('shift_2_ton', 'Shift 2')}
-                                {renderNumericInput('shift_3_ton', 'Shift 3')}
+                                {['1','2','3'].map(num => (
+                                    <div key={num} className="flex flex-col">
+                                        <label className="text-sm font-medium text-gray-700 mb-1">Shift {num} (Ton)</label>
+                                        <input type="text" inputMode="decimal" name={`shift_${num}_ton`} value={formData[`shift_${num}_ton`]} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md focus:ring-blue-500" />
+                                    </div>
+                                ))}
                             </>
                         )}
                     </div>
 
                     <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-6">
-                        <p className="font-semibold text-gray-700">Pratinjau Total Produksi:</p>
-                        <p className={`text-2xl font-bold ${totalProduksiDisplay >= parseInputToFloat(formData.target) ? 'text-green-800' : 'text-red-800'}`}>
+                        <p className="font-semibold text-gray-700">Total Produksi Tercatat:</p>
+                        <p className={`text-2xl font-bold ${totalProduksiDisplay >= parseValue(formData.target) ? 'text-green-800' : 'text-red-800'}`}>
                             {totalProduksiDisplay.toLocaleString('id-ID')} TON
                         </p>
                     </div>
@@ -251,13 +247,13 @@ const PenjumboanCrudPage = () => {
                                 <button type="button" onClick={() => {setFormData(initialFormData); setIsEditMode(false);}} className="bg-gray-400 text-white px-6 py-2 rounded-lg">Batal</button>
                             </>
                         ) : (
-                            <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Tambah Laporan</button>
+                            <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Tambah Laporan</button>
                         )}
                     </div>
                 </form>
             </div>
 
-            {/* TABEL DATA */}
+            {/* DATA TABLE SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                     <select value={filterUnitId} onChange={(e) => setFilterUnitId(e.target.value)} className="p-2 border rounded-md flex-1">
@@ -267,7 +263,7 @@ const PenjumboanCrudPage = () => {
                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
                 </div>
 
-                {isLoading ? <p>Memuat...</p> : (
+                {isLoading ? <p className="text-center text-blue-600">Memuat data...</p> : (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-100">
