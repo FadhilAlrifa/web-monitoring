@@ -2,27 +2,37 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext'; 
 
+// const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
+
+// HAPUS PANGGILAN REDUNDAN: fetch(`${API_URL}/api`)
 const REPORT_API = 'laporan'; 
 
+// --- STATE AWAL ---
 const initialFormData = {
     tanggal: new Date().toISOString().split('T')[0],
     id_unit: '',
-    produksi_s1: '', // Gunakan string agar mendukung input koma
-    produksi_s2: '',
-    produksi_s3: '',
-    produksi_ton: 0, 
-    jam_operasi: '',
-    h_proses: '', h_listrik: '', h_mekanik: '', h_operator: '',
-    h_hujan: '', h_kapal: '', h_pmc: '',
+
+    // PRODUKSI SHIFT ➕ DITAMBAHKAN
+    produksi_s1: 0,
+    produksi_s2: 0,
+    produksi_s3: 0,
+
+    produksi_ton: 0, // sekarang otomatis (total shift)
+
+    jam_operasi: 0,
+    h_proses: 0, h_listrik: 0, h_mekanik: 0, h_operator: 0,
+    h_hujan: 0, h_kapal: 0, h_pmc: 0,
     id_laporan: null,
 };
 
+// --- FIX TANGGAL ---
 const formatDateInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`; 
 };
+
 
 const CrudPage = ({ unitGroup }) => { 
     const { user, isAdmin } = useAuth();
@@ -31,35 +41,43 @@ const CrudPage = ({ unitGroup }) => {
     const [formData, setFormData] = useState(initialFormData);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditMode, setIsEditMode] = useState(false);
+
     const [filterUnitId, setFilterUnitId] = useState('');
     const [filterDate, setFilterDate] = useState('');
+
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    const allowedGroupName = unitGroup === 'pabrik' ? 'Pabrik' : unitGroup === 'bks' ? 'BKS' : undefined;
-
-    // --- HELPER: Konversi string lokal (koma) ke angka sistem (titik) ---
-    const parseValue = (val) => {
-        if (!val) return 0;
-        const cleaned = val.toString().replace(',', '.');
-        return parseFloat(cleaned) || 0;
-    };
+    const allowedGroupName = unitGroup === 'pabrik' ? 'Pabrik' : 
+                             unitGroup === 'bks' ? 'BKS' : undefined;
 
     const totalHambatan = 
-        parseValue(formData.h_proses) + parseValue(formData.h_listrik) +
-        parseValue(formData.h_mekanik) + parseValue(formData.h_operator) +
-        parseValue(formData.h_hujan) + parseValue(formData.h_kapal) +
-        parseValue(formData.h_pmc);
+        parseFloat(formData.h_proses || 0) +
+        parseFloat(formData.h_listrik || 0) +
+        parseFloat(formData.h_mekanik || 0) +
+        parseFloat(formData.h_operator || 0) +
+        parseFloat(formData.h_hujan || 0) +
+        parseFloat(formData.h_kapal || 0) +
+        parseFloat(formData.h_pmc || 0);
 
+    const totalWaktu = parseFloat(formData.jam_operasi || 0) + totalHambatan;
+
+    // ➕ TOTAL PRODUKSI DARI SHIFT
     const totalProduksi = 
-        parseValue(formData.produksi_s1) +
-        parseValue(formData.produksi_s2) +
-        parseValue(formData.produksi_s3);
+        parseFloat(formData.produksi_s1 || 0) +
+        parseFloat(formData.produksi_s2 || 0) +
+        parseFloat(formData.produksi_s3 || 0);
 
+    // Update otomatis ke produksi_ton
     useEffect(() => {
         setFormData(prev => ({ ...prev, produksi_ton: totalProduksi }));
-    }, [formData.produksi_s1, formData.produksi_s2, formData.produksi_s3, totalProduksi]);
+    }, [
+        formData.produksi_s1,
+        formData.produksi_s2,
+        formData.produksi_s3
+    ]);
 
+    // FILTER DATA
     const filteredLaporan = useMemo(() => {
         if (!laporan) return [];
         let filtered = laporan;
@@ -69,52 +87,108 @@ const CrudPage = ({ unitGroup }) => {
         if (filterDate) filtered = filtered.filter(item => item.tanggal.split('T')[0] === filterDate);
         return filtered;
     }, [laporan, filterUnitId, filterDate, units]);
+    
+    const exportToCSV = () => {
+        if (filteredLaporan.length === 0) {
+            return alert("Tidak ada data untuk diekspor.");
+        }
+        
+        const headers = [
+            "Tanggal", "Unit Kerja", "Produksi (Ton)", "Jam Operasi", "Total Hambatan",
+            "Hambatan Proses", "Hambatan Listrik", "Hambatan Mekanik", "Hambatan Operator", 
+            "Hambatan Hujan", "Hambatan Kapal", "Hambatan PMC"
+        ];
+        
+        const csvRows = filteredLaporan.map(item => {
+            const unitName = getUnitName(item.id_unit); 
+            
+            // Format Tanggal untuk CSV (Tambahkan 12 jam offset untuk mengoreksi Timezone Bug)
+            const dateFromDB = new Date(item.tanggal);
+            const correctedDate = new Date(dateFromDB.getTime() + (12 * 60 * 60 * 1000));
+            const formattedDate = correctedDate.toLocaleDateString('en-GB'); 
 
+            return [
+                `"${formattedDate}"`,
+                `"${unitName}"`,
+                item.produksi_ton,
+                item.jam_operasi,
+                item.total_hambatan,
+                item.h_proses,
+                item.h_listrik,
+                item.h_mekanik,
+                item.h_operator,
+                item.h_hujan,
+                item.h_kapal,
+                item.h_pmc
+            ].join(',');
+        });
+
+        const csvContent = [
+            headers.join(','),
+            ...csvRows
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Laporan_Produksi_${allowedGroupName || 'Global'}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    // HANDLER INPUT
     const handleChange = (e) => {
         const { name, value, type } = e.target;
         
-        // Logika Input: Jika bukan tanggal/select, perlakukan sebagai input teks yang mendukung koma
-        if (type !== 'date' && name !== 'id_unit') {
+        // Jika inputan adalah kolom angka (shift atau hambatan)
+        if (type === 'text' && (name.startsWith('produksi_s') || name.startsWith('h_') || name === 'jam_operasi')) {
             // Hanya izinkan angka, koma, dan titik
-            const regex = /^[0-9.,]*$/;
-            if (value === '' || regex.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
-            }
+            const cleanedValue = value.replace(/[^0-9.,]/g, '');
+            setFormData(prev => ({ ...prev, [name]: cleanedValue }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
     const handleEdit = (laporanData) => {
+        const convertToComma = (val) => (val || 0).toString().replace('.', ',');
+
         setFormData({ 
             ...laporanData,
             tanggal: formatDateInput(laporanData.tanggal),
             id_laporan: laporanData.id_laporan,
             id_unit: laporanData.id_unit.toString(),
-            // Ubah titik dari database menjadi koma untuk kenyamanan user
-            produksi_s1: (laporanData.produksi_s1 || 0).toString().replace('.', ','),
-            produksi_s2: (laporanData.produksi_s2 || 0).toString().replace('.', ','),
-            produksi_s3: (laporanData.produksi_s3 || 0).toString().replace('.', ','),
-            jam_operasi: (laporanData.jam_operasi || 0).toString().replace('.', ','),
-            h_proses: (laporanData.h_proses || 0).toString().replace('.', ','),
-            h_listrik: (laporanData.h_listrik || 0).toString().replace('.', ','),
-            h_mekanik: (laporanData.h_mekanik || 0).toString().replace('.', ','),
-            h_operator: (laporanData.h_operator || 0).toString().replace('.', ','),
-            h_hujan: (laporanData.h_hujan || 0).toString().replace('.', ','),
-            h_kapal: (laporanData.h_kapal || 0).toString().replace('.', ','),
-            h_pmc: (laporanData.h_pmc || 0).toString().replace('.', ','),
+
+            produksi_s1: convertToComma(laporanData.produksi_s1),
+            produksi_s2: convertToComma(laporanData.produksi_s2),
+            produksi_s3: convertToComma(laporanData.produksi_s3),
+            jam_operasi: convertToComma(laporanData.jam_operasi),
+            h_proses: convertToComma(laporanData.h_proses),
+            h_listrik: convertToComma(laporanData.h_listrik),
+            h_mekanik: convertToComma(laporanData.h_mekanik),
+            h_operator: convertToComma(laporanData.h_operator),
+            h_hujan: convertToComma(laporanData.h_hujan),
+            h_kapal: convertToComma(laporanData.h_kapal),
+            h_pmc: convertToComma(laporanData.h_pmc),
         });
         setIsEditMode(true);
-        window.scrollTo(0, 0);
+        setSuccessMessage(null);
+        setError(null);
     };
 
+    // FETCH
     const fetchMasterData = async () => {
         try {
             const unitsRes = await axios.get(`${API_URL}/api/units`);
             let filteredUnits = unitsRes.data;
-            if (allowedGroupName) filteredUnits = filteredUnits.filter(unit => unit.group_name === allowedGroupName);
+            if (allowedGroupName) 
+                filteredUnits = filteredUnits.filter(unit => unit.group_name === allowedGroupName);
+
             setUnits(filteredUnits); 
-        } catch (error) { setError('Gagal memuat unit kerja.'); }
+        } catch (error) {
+            console.error(error);
+            setError('Gagal memuat unit kerja.'); 
+        }
     };
 
     const fetchLaporan = async () => {
@@ -123,24 +197,57 @@ const CrudPage = ({ unitGroup }) => {
         try {
             const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); 
             setLaporan(res.data);
-        } catch (error) { setError('Gagal memuat daftar laporan.'); }
-        finally { setIsLoading(false); }
+            setIsLoading(false);
+        } catch (error) {
+            console.error(error);
+            setError('Gagal memuat daftar laporan.');
+            setIsLoading(false);
+        }
     };
 
+    const handleDelete = async (id_laporan) => {
+        // PERBAIKAN: Gunakan modal kustom atau konfirmasi yang lebih baik jika alert() tidak diizinkan
+        if (window.confirm('Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.')) {
+            setError(null);
+            setSuccessMessage(null);
+            try {
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`);
+                setSuccessMessage('Laporan berhasil dihapus.');
+                fetchLaporan();
+            } catch (error) {
+                console.error('Error deleting report:', error.response?.data);
+                setError('Gagal menghapus laporan.');
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchMasterData();
+        if (user) fetchLaporan();
+        else setIsLoading(false);
+    }, [user, isAdmin]);
+
+    // SUBMIT
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
         setSuccessMessage(null);
 
-        // KONVERSI SEMUA INPUT TEKS (KOMA) KE NUMBER (TITIK) SEBELUM KIRIM KE BACKEND
+        // MENGGUNAKAN parseValue: Mengonversi semua input teks (koma) 
+        // menjadi format angka sistem (titik) sebelum dikirim ke API
         const dataToSend = {
             tanggal: formData.tanggal,
             id_unit: formData.id_unit,
+            id_laporan: formData.id_laporan,
+
             produksi_s1: parseValue(formData.produksi_s1),
             produksi_s2: parseValue(formData.produksi_s2),
             produksi_s3: parseValue(formData.produksi_s3),
-            produksi_ton: totalProduksi,
+
+            // totalProduksi sudah dihitung di atas menggunakan parseValue
+            produksi_ton: totalProduksi, 
             jam_operasi: parseValue(formData.jam_operasi),
+
             h_proses: parseValue(formData.h_proses),
             h_listrik: parseValue(formData.h_listrik),
             h_mekanik: parseValue(formData.h_mekanik),
@@ -156,55 +263,48 @@ const CrudPage = ({ unitGroup }) => {
             } else {
                 await axios.post(`${API_URL}/api/${REPORT_API}`, dataToSend);
             }
+
             setSuccessMessage('Laporan berhasil disimpan!');
             setFormData(initialFormData);
             setIsEditMode(false);
             fetchLaporan();
+
         } catch (error) {
-            setError(error.response?.data?.message || 'Gagal menyimpan laporan.');
+            console.error('Error submitting report:', error.response?.data);
+            const specificErrorMessage = error.response?.data?.message;
+            setError(specificErrorMessage || 'Gagal menyimpan laporan. Terjadi kesalahan server.');
         }
     };
 
-    const handleDelete = async (id_laporan) => {
-        if (window.confirm('Hapus laporan ini?')) {
-            try {
-                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`);
-                setSuccessMessage('Laporan dihapus.');
-                fetchLaporan();
-            } catch (error) { setError('Gagal menghapus laporan.'); }
-        }
-    };
-
-    useEffect(() => {
-        fetchMasterData();
-        if (user) fetchLaporan();
-    }, [user, isAdmin]);
 
     const getUnitName = (id) => units.find(u => u.id_unit.toString() === id.toString())?.nama_unit || 'N/A';
 
-    // MODIFIKASI RENDER INPUT: Gunakan type="text" & inputMode="decimal"
-    const renderInput = (label, name, type = 'text', disabled = false) => (
+    // RENDER INPUT
+    const renderInput = (label, name, type = 'text', step = '0.01', disabled = false) => (
         <div className="flex flex-col">
-            <label className="text-sm mb-1 font-medium text-gray-700">{label}</label>
+            <label className="text-sm mb-1">{label}</label>
             <input
+                id={name}
                 type={type}
-                inputMode={type === 'text' ? 'decimal' : undefined}
+                inputMode={type === 'text' ? "decimal" : undefined} // Munculkan keyboard angka di HP
                 name={name}
-                value={formData[name]} 
+                value={formData[name] === 0 ? '' : formData[name]} // Menghindari angka 0 mengganggu saat mulai mengetik
                 onChange={handleChange}
-                className="p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded"
                 disabled={disabled}
-                required={name === 'tanggal' || name === 'id_unit'}
-                placeholder={type === 'text' ? "0,00" : ""}
+                placeholder="0,00"
             />
         </div>
     );
 
     return (
         <div className="min-h-screen bg-gray-50 p-4">
+            {/* FORM */}
             <div className="bg-white p-8 rounded-2xl shadow-xl mb-6 border">
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4">
+
+                    {/* ==== HEADER FORM ==== */}
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-2">
                         <h2 className="text-2xl font-extrabold text-gray-800">
                             {isEditMode ? "✏️ Edit Laporan Produksi" : "➕ Input Produksi Harian"}
                         </h2>
@@ -212,22 +312,33 @@ const CrudPage = ({ unitGroup }) => {
                             {allowedGroupName || "Global"}
                         </span>
                     </div>
+                    {successMessage && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">{successMessage}</div>}
+                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">{error}</div>}
 
-                    {successMessage && <div className="bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded relative">{successMessage}</div>}
-                    {error && <div className="bg-red-100 border-red-400 text-red-700 px-4 py-3 rounded relative">{error}</div>}
-
+                    {/* ==== HEADER INPUT UTAMA ==== */}
                     <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6">
-                        {renderInput("Tanggal Produksi", "tanggal", "date", isEditMode)}
+                        {renderInput("Tanggal Produksi", "tanggal", "date", null, isEditMode)}
+
                         <div className="flex flex-col">
                             <label className="text-sm mb-1 font-medium">Unit Kerja</label>
-                            <select name="id_unit" value={formData.id_unit} onChange={handleChange} className="p-3 border rounded-lg" disabled={isEditMode} required>
+                            <select 
+                                name="id_unit"
+                                value={formData.id_unit}
+                                onChange={handleChange}
+                                className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                disabled={isEditMode}
+                            >
                                 <option value="">-- Pilih Unit --</option>
-                                {units.map(u => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
+                                {units.map(u => (
+                                    <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>
+                                ))}
                             </select>
                         </div>
+
                         {renderInput("Jam Operasi", "jam_operasi")}
                     </div>
 
+                    {/* ==== PRODUKSI PER SHIFT ==== */}
                     <div>
                         <h3 className="font-bold text-lg text-blue-700 mb-3">Produksi per Shift (TON)</h3>
                         <div className="grid md:grid-cols-3 gap-5">
@@ -237,17 +348,20 @@ const CrudPage = ({ unitGroup }) => {
                         </div>
                     </div>
 
+                    {/* ==== TOTAL PRODUKSI CARD ==== */}
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="bg-gradient-to-br from-green-600 to-emerald-500 text-white p-6 rounded-xl shadow-lg">
-                            <p className="text-sm uppercase opacity-90">Total Produksi</p>
-                            <p className="text-xl font-extrabold mt-2">{totalProduksi.toLocaleString('id-ID')} TON</p>
+                            <p className="text-sm uppercase opacity-90">Total Produksi Hari Ini</p>
+                            <p className="text-xl font-extrabold mt-2">{totalProduksi.toFixed(2)} TON</p>
                         </div>
+
                         <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-6 rounded-xl shadow-lg">
                             <p className="text-sm uppercase opacity-90">Total Jam Hambatan</p>
-                            <p className="text-xl font-extrabold mt-2">{totalHambatan.toLocaleString('id-ID')} Jam</p>
+                            <p className="text-xl font-extrabold mt-2">{totalHambatan.toFixed(2)} Jam</p>
                         </div>
                     </div>
 
+                    {/* ==== INPUT HAMBATAN ==== */}
                     <div>
                         <h3 className="font-bold text-lg text-blue-700 mb-3">Jam Hambatan</h3>
                         <div className="grid lg:grid-cols-7 md:grid-cols-3 gap-4">
@@ -261,54 +375,103 @@ const CrudPage = ({ unitGroup }) => {
                         </div>
                     </div>
 
+                    {/* ==== TOMBOL SUBMIT ==== */}
                     <div className="flex justify-end gap-4 pt-4 border-t">
-                        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition"
+                        >
                             {isEditMode ? "💾 Perbarui Data" : "✅ Simpan Laporan"}
                         </button>
+
                         {isEditMode && (
-                            <button type="button" onClick={() => { setIsEditMode(false); setFormData(initialFormData); }} className="bg-gray-300 hover:bg-gray-400 px-8 py-3 rounded-xl font-semibold transition">
+                            <button 
+                                type="button" 
+                                onClick={() => { setIsEditMode(false); setFormData(initialFormData); }}
+                                className="bg-gray-300 hover:bg-gray-400 px-8 py-3 rounded-xl font-semibold transition"
+                            >
                                 ❌ Batal
                             </button>
                         )}
                     </div>
+
                 </form>
-            </div>
+                </div>
 
             {/* TABEL LISTING */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Daftar Laporan Harian</h2>
-                <div className="flex flex-col sm:flex-row gap-4 mb-4 p-4 border rounded-md bg-gray-50">
-                    <select value={filterUnitId} onChange={(e) => setFilterUnitId(e.target.value)} className="p-2 border rounded-md flex-1">
-                        <option value="">-- Semua Unit --</option>
-                        {units.map(unit => <option key={unit.id_unit} value={unit.id_unit}>{unit.nama_unit}</option>)}
-                    </select>
-                    <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-0 mt-0">Daftar Laporan Harian Tersimpan</h2>
+                    
+                    {/* TOMBOL DOWNLOAD BARU DITEMPATKAN DI SINI */}
+                    <button 
+                        onClick={exportToCSV}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition duration-150 flex items-center space-x-2 disabled:opacity-50"
+                        disabled={filteredLaporan.length === 0}
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Download Data (.CSV)</span>
+                    </button>
                 </div>
 
-                {isLoading ? <p className="text-center p-8">Memuat data...</p> : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                {/* AREA FILTER BARU */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-4 p-4 border rounded-md bg-gray-50">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Filter Unit Kerja:</label>
+                        <select
+                            value={filterUnitId}
+                            onChange={(e) => setFilterUnitId(e.target.value)}
+                            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                        >
+                            <option value="">-- Semua Unit --</option>
+                            {units.map(unit => (
+                                <option key={unit.id_unit} value={unit.id_unit}>
+                                    {unit.nama_unit}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Filter Tanggal:</label>
+                        <input
+                            type="date"
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value)}
+                            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                        />
+                    </div>
+                </div>
+                {/* AKHIR AREA FILTER */}
+
+                
+                {isLoading ? (
+                    <p className="text-center p-8">Memuat data laporan...</p>
+                ) : (
+                    <div className="overflow-x-auto bg-white rounded-xl shadow-lg">
+                        <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left">Tanggal</th>
-                                    <th className="px-6 py-3 text-left">Unit</th>
-                                    <th className="px-6 py-3 text-left">Produksi (TON)</th>
-                                    <th className="px-6 py-3 text-left">Jam Ops</th>
-                                    <th className="px-6 py-3 text-left text-red-500">Hambatan</th>
-                                    <th className="px-6 py-3 text-center">Aksi</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produksi (TON)</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Operasi</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hambatan</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredLaporan.map((l) => (
                                     <tr key={l.id_laporan} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4">{new Date(l.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                                        <td className="px-6 py-4 font-medium">{getUnitName(l.id_unit)}</td>
-                                        <td className="px-6 py-4">{parseFloat(l.produksi_ton).toLocaleString('id-ID')}</td>
-                                        <td className="px-6 py-4">{parseFloat(l.jam_operasi).toLocaleString('id-ID')}</td>
-                                        <td className="px-6 py-4 text-red-500 font-semibold">{parseFloat(l.total_hambatan).toLocaleString('id-ID')}</td>
-                                        <td className="px-6 py-4 text-center space-x-2">
-                                            <button onClick={() => handleEdit(l)} className="text-blue-600 bg-blue-50 px-3 py-1 rounded">Edit</button>
-                                            <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 bg-red-50 px-3 py-1 rounded">Hapus</button>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {new Date(l.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '')}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getUnitName(l.id_unit)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{parseFloat(l.produksi_ton).toFixed(2)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{parseFloat(l.jam_operasi).toFixed(2)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-semibold">{parseFloat(l.total_hambatan).toFixed(2)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                            <button onClick={() => handleEdit(l)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
+                                            <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
                                         </td>
                                     </tr>
                                 ))}
