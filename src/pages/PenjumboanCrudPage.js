@@ -371,7 +371,7 @@ const PenjumboanCrudPage = () => {
                     {/* TOTAL PRODUKSI OTOMATIS */}
                     <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-6">
                         <p className="font-semibold text-gray-700">
-                             Total Produksi ({isTotalPolysling ? 'Input Tunggal' : 'Shift 1+2+3'}):
+                             Total Produksi ({isTotalPolysling ? '' : 'Shift 1+2+3'}):
                         </p>
                         <p className={`text-2xl font-bold ${totalProduksi >= formData.target ? 'text-green-800' : 'text-red-800'}`}>
                             {totalProduksi.toFixed(2)} TON
