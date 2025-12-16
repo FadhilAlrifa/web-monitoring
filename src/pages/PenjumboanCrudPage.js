@@ -2,10 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
-// const API_URL = 'http://localhost:5000/api';
 const API_URL = process.env.REACT_APP_API_URL;
-
-// Hapus: fetch(`${API_URL}/api`)
 
 const PAGE_GROUP_NAME = 'Penjumboan';
 const REPORT_API = 'penjumboan/laporan';
@@ -16,6 +13,7 @@ const initialFormData = {
     shift_1_ton: 0,
     shift_2_ton: 0,
     shift_3_ton: 0,
+    total_ton: 0, // <-- FIELD BARU untuk Total Polysling
     target: 650,
     id_laporan: null,
 };
@@ -28,18 +26,32 @@ const PenjumboanCrudPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // State Filter BARU
     const [filterUnitId, setFilterUnitId] = useState('');
     const [filterDate, setFilterDate] = useState('');
 
-    // State Notifikasi
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // Perhitungan Total
-    const totalProduksi = parseFloat(formData.shift_1_ton || 0) +
-        parseFloat(formData.shift_2_ton || 0) +
-        parseFloat(formData.shift_3_ton || 0);
+    // Dapatkan nama unit yang sedang dipilih (untuk conditional rendering)
+    const selectedUnitName = useMemo(() => {
+        return units.find(u => u.id_unit.toString() === formData.id_unit)?.nama_unit || '';
+    }, [formData.id_unit, units]);
+    
+    // Flag untuk Unit Agregator
+    const isTotalPolysling = selectedUnitName === 'Total Polysling';
+
+    // Perhitungan Total Produksi
+    const totalProduksi = useMemo(() => {
+        if (isTotalPolysling) {
+            // Jika Total Polysling, ambil dari field total_ton
+            return parseFloat(formData.total_ton || 0);
+        } else {
+            // Jika unit biasa, hitung dari shift 1, 2, 3
+            return parseFloat(formData.shift_1_ton || 0) +
+                   parseFloat(formData.shift_2_ton || 0) +
+                   parseFloat(formData.shift_3_ton || 0);
+        }
+    }, [formData, isTotalPolysling]);
 
     // --- LOGIKA FILTERING TABEL (useMemo) ---
     const filteredLaporan = useMemo(() => {
@@ -76,7 +88,6 @@ const PenjumboanCrudPage = () => {
             const unitName = getUnitName(item.id_unit);
             const total = parseFloat(item.shift_1_ton) + parseFloat(item.shift_2_ton) + parseFloat(item.shift_3_ton);
 
-            // === Gunakan tanggal asli tanpa +1 hari === //
             const originalDate = new Date(item.tanggal);
             const day = String(originalDate.getDate()).padStart(2, '0');
             const month = String(originalDate.getMonth() + 1).padStart(2, '0');
@@ -110,9 +121,15 @@ const PenjumboanCrudPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        const val = (name.endsWith('_ton') || name === 'target')
-            ? parseFloat(value) || 0
+        
+        // 1. Logic untuk penanganan input desimal (koma/titik)
+        const cleanedValue = value.replace(',', '.');
+        
+        // 2. Tentukan nilai yang akan disimpan
+        const val = (name.endsWith('_ton') || name === 'target' || name === 'total_ton')
+            ? parseFloat(cleanedValue) || 0
             : value;
+            
         setFormData(prev => ({ ...prev, [name]: val }));
     };
 
@@ -125,6 +142,7 @@ const PenjumboanCrudPage = () => {
             shift_1_ton: parseFloat(laporanData.shift_1_ton) || 0,
             shift_2_ton: parseFloat(laporanData.shift_2_ton) || 0,
             shift_3_ton: parseFloat(laporanData.shift_3_ton) || 0,
+            total_ton: parseFloat(laporanData.total_produksi) || 0, // Gunakan total_produksi sebagai total_ton saat edit
             target: parseFloat(laporanData.target) || 0,
         });
         setIsEditMode(true);
@@ -141,8 +159,7 @@ const PenjumboanCrudPage = () => {
     // --- FETCH DATA ---
     const fetchMasterData = async () => {
         try {
-            // PERBAIKAN: Tambahkan /api/ untuk rute units
-            const unitsRes = await axios.get(`${API_URL}/api/units`); // <--- PERBAIKAN
+            const unitsRes = await axios.get(`${API_URL}/api/units`); 
 
             let filteredUnits = unitsRes.data.filter(unit => unit.group_name === PAGE_GROUP_NAME);
             setUnits(filteredUnits);
@@ -154,7 +171,6 @@ const PenjumboanCrudPage = () => {
             console.error('Error fetching master data:', error);
             setError('Gagal memuat unit kerja.');
         } finally {
-            // Set loading false di sini setelah fetch master data
             setIsLoading(false);
         }
     };
@@ -163,8 +179,7 @@ const PenjumboanCrudPage = () => {
         if (!isAdmin) { setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            // PERBAIKAN: Tambahkan /api/ untuk rute laporan/all
-            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); // <--- PERBAIKAN
+            const res = await axios.get(`${API_URL}/api/${REPORT_API}/all`); 
             setLaporan(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -188,14 +203,32 @@ const PenjumboanCrudPage = () => {
 
         if (!formData.id_unit) { return setError("Silakan pilih Unit Kerja."); }
 
+        // PERSIAPAN PAYLOAD
+        let payloadToSend = { ...formData };
+
+        if (isTotalPolysling) {
+            // Jika Total Polysling, nolkan shift dan gunakan total_ton
+            payloadToSend.shift_1_ton = 0;
+            payloadToSend.shift_2_ton = 0;
+            payloadToSend.shift_3_ton = 0;
+            payloadToSend.total_produksi = totalProduksi; // Ambil dari perhitungan total
+        } else {
+             // Jika unit normal, total_produksi akan dihitung di backend, 
+             // tetapi kita bisa menghitung di sini untuk konsistensi.
+             payloadToSend.total_produksi = totalProduksi;
+        }
+        
+        // Hapus field yang tidak ada di database LaporanPenjumboan
+        delete payloadToSend.total_ton; 
+        delete payloadToSend.id_laporan;
+
+
         try {
             if (isEditMode) {
-                // PERBAIKAN: Tambahkan /api/ untuk rute PUT
-                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, formData); // <--- PERBAIKAN
+                await axios.put(`${API_URL}/api/${REPORT_API}/${formData.id_laporan}`, payloadToSend);
                 setSuccessMessage('Laporan diperbarui!');
             } else {
-                // PERBAIKAN: Tambahkan /api/ untuk rute POST
-                await axios.post(`${API_URL}/api/${REPORT_API}`, formData); // <--- PERBAIKAN
+                await axios.post(`${API_URL}/api/${REPORT_API}`, payloadToSend);
                 setSuccessMessage('Laporan ditambahkan!');
             }
 
@@ -214,8 +247,7 @@ const PenjumboanCrudPage = () => {
             setError(null);
             setSuccessMessage(null);
             try {
-                // PERBAIKAN: Tambahkan /api/ untuk rute delete
-                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`); // <--- PERBAIKAN
+                await axios.delete(`${API_URL}/api/${REPORT_API}/${id_laporan}`);
                 setSuccessMessage('Laporan berhasil dihapus.');
                 fetchLaporan();
             } catch (error) {
@@ -227,6 +259,24 @@ const PenjumboanCrudPage = () => {
 
     const getUnitName = (id) => units.find(u => u.id_unit.toString() === id.toString())?.nama_unit || 'N/A';
 
+    // Komponen Input yang Reusable
+    const renderInput = (name, label, type = 'number', step = '1', disabled = false) => (
+        <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <input
+                type={type}
+                name={name}
+                value={formData[name]?.toString() || ''}
+                onChange={handleChange}
+                className="p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                step={step}
+                min="0"
+                required
+                disabled={disabled}
+            />
+        </div>
+    );
+    
     // Komponen Input Shift yang Reusable
     const renderShiftInput = (shiftNum, label) => (
         <div className="flex flex-col">
@@ -263,18 +313,7 @@ const PenjumboanCrudPage = () => {
                     {/* BAGIAN UMUM */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         {/* Tanggal */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                            <input
-                                type="date"
-                                name="tanggal"
-                                value={formData.tanggal}
-                                onChange={handleChange}
-                                required
-                                className="p-2 border rounded-md"
-                                disabled={isEditMode}
-                            />
-                        </div>
+                        {renderInput('tanggal', 'Tanggal', 'date', null, isEditMode)}
 
                         {/* Dropdown Unit Kerja */}
                         <div className="flex flex-col">
@@ -309,19 +348,34 @@ const PenjumboanCrudPage = () => {
                         </div>
                     </div>
 
-                    <h3 className="text-lg font-semibold text-blue-700 mb-4 border-t pt-4">Input Produksi Shift (Ton)</h3>
+                    <h3 className="text-lg font-semibold text-blue-700 mb-4 border-t pt-4">
+                        {isTotalPolysling ? 'Input Total Produksi' : 'Input Produksi Shift (Ton)'}
+                    </h3>
+                    
+                    {/* LOGIC INPUT PRODUKSI: SHIFT vs TOTAL */}
+                    {isTotalPolysling ? (
+                        /* Input Tunggal: Total Produksi */
+                        <div className="grid grid-cols-1 md:w-1/4 gap-4 mb-6">
+                            {renderInput('total_ton', 'Total Produksi (Ton)', 'number', '0.01')}
+                        </div>
+                    ) : (
+                        /* Input Shift: S1, S2, S3 */
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {renderShiftInput(1, 'Shift 1')}
+                            {renderShiftInput(2, 'Shift 2')}
+                            {renderShiftInput(3, 'Shift 3')}
+                        </div>
+                    )}
 
-                    {/* BAGIAN SHIFT INPUT */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        {renderShiftInput(1, 'Shift 1')}
-                        {renderShiftInput(2, 'Shift 2')}
-                        {renderShiftInput(3, 'Shift 3')}
-                    </div>
 
                     {/* TOTAL PRODUKSI OTOMATIS */}
                     <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-6">
-                        <p className="font-semibold text-gray-700">Total Produksi (Shift 1+2+3):</p>
-                        <p className="text-2xl font-bold text-blue-800">{totalProduksi.toFixed(2)} TON</p>
+                        <p className="font-semibold text-gray-700">
+                             Total Produksi ({isTotalPolysling ? 'Input Tunggal' : 'Shift 1+2+3'}):
+                        </p>
+                        <p className={`text-2xl font-bold ${totalProduksi >= formData.target ? 'text-green-800' : 'text-red-800'}`}>
+                            {totalProduksi.toFixed(2)} TON
+                        </p>
                     </div>
 
                     {/* Tombol Aksi */}
