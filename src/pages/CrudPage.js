@@ -25,6 +25,10 @@ const initialFormData = {
     h_hujan: 0, h_kapal: 0, h_pmc: 0,
     id_laporan: null,
 };
+const normalizeNumber = (value) => {
+    if (value === '' || value === null || value === undefined) return 0;
+    return parseFloat(value.toString().replace(',', '.')) || 0;
+};
 
 // --- FIX TANGGAL ---
 const formatDateInput = (dateString) => {
