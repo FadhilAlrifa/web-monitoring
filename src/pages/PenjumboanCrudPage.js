@@ -289,8 +289,8 @@ const PenjumboanCrudPage = () => {
                                             {parseFloat(item.total_produksi).toLocaleString('id-ID')}
                                         </td>
                                         <td className="px-4 py-4 text-center">
-                                            <button onClick={() => handleEdit(l)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
-                                            <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
+                                            <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
+                                            <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
                                         </td>
                                     </tr>
                                 ))}
