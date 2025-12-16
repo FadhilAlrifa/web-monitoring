@@ -280,7 +280,7 @@ const PenjumboanCrudPage = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredLaporan.map((item) => (
                                     <tr key={item.id_laporan} className="hover:bg-gray-50 text-sm">
-                                        <td className="px-4 py-4">{new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</td>
+                                        <td className="px-4 py-4">{new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                         <td className="px-4 py-4 font-medium">{getUnitName(item.id_unit)}</td>
                                         <td className="px-4 py-4 text-center">{parseFloat(item.shift_1_ton).toLocaleString('id-ID')}</td>
                                         <td className="px-4 py-4 text-center">{parseFloat(item.shift_2_ton).toLocaleString('id-ID')}</td>
