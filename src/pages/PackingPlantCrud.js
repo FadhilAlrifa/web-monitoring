@@ -48,7 +48,36 @@ const PackingPlantCrud = () => {
         if (filterDate) filtered = filtered.filter(item => item.tanggal.split('T')[0] === filterDate);
         return filtered;
     }, [laporan, filterUnitId, filterDate, units]);
+    const exportToCSV = () => {
+        if (filteredLaporan.length === 0) {
+            return alert("Tidak ada data untuk diekspor.");
+        }
+        
+        const headers = ["Tanggal", "Unit Kerja", "Ton Muat (Ton)", "Target Harian (Ton)", "Target RKAP (Ton)"];
+        
+        const csvRows = filteredLaporan.map(item => {
+            const unitName = units.find(u => u.id_unit.toString() === item.id_unit.toString())?.nama_unit || 'N/A';
+            const dateObj = new Date(item.tanggal);
+            const formattedDate = dateObj.toLocaleDateString('en-GB'); 
 
+            return [
+                `"${formattedDate}"`,
+                `"${unitName}"`,
+                item.ton_muat,
+                item.target,
+                item.target_rkp
+            ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Laporan_PP_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
     // --- HANDLERS ---
     const handleChange = (e) => {
         const { name, value, type } = e.target;
