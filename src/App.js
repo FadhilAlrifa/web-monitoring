@@ -19,6 +19,7 @@ import PemuatanCrudPage from './pages/PemuatanCrudPage';
 import PackingPlantDashboard from './pages/PackingPlantDashboard';
 import PackingPlantCrud from './pages/PackingPlantCrud';
 import MasterDashboard from './pages/MasterDashboard';
+import RKAPTargetPage from './pages/RKAPTargetPage';
 
 
 const LOGO_PATH = '/logo-perusahaan.png';
@@ -137,6 +138,7 @@ const AppLayout = () => {
                             <Route path="/login" element={<LoginPage />} />
 
                             {/* Dashboard & Produksi (Akses Publik) */}
+                            
                             <Route path="/" element={<MasterDashboard />} />
                             <Route path="/master" element={<MasterDashboard />} /> 
                             <Route path="/produksi/pabrik" element={<ProduksiPabrikDashboard />} />
@@ -144,6 +146,7 @@ const AppLayout = () => {
                             <Route path="/penjumboan" element={<PenjumboanDashboardPage />} />
                             <Route path="/pemuatan" element={<PemuatanDashboardPage />} />
                             <Route path="/packing-plant/dashboard" element={<PackingPlantDashboard />} />
+                            <Route path="/settings/rkap" element={<RKAPTargetPage />} />
 
 
                             {/* Input Data Admin (CRUD) - DILINDUNGI ADMIN */}
@@ -152,6 +155,7 @@ const AppLayout = () => {
                             <Route path="/input/bks" element={<AdminRoute><ProduksiBKSCrud /></AdminRoute>} />
                             <Route path="/input/penjumboan" element={<AdminRoute><PenjumboanCrudPage /></AdminRoute>} />
                             <Route path="/input/pemuatan" element={<AdminRoute><PemuatanCrudPage /></AdminRoute>} />
+                            <Route path="/input/packing-plant" element={<AdminRoute><PackingPlantCrud /></AdminRoute>} />
                             <Route path="/input/packing-plant" element={<AdminRoute><PackingPlantCrud /></AdminRoute>} />
 
                             {/* Catch-all route */}
