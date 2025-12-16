@@ -288,7 +288,7 @@ const PenjumboanCrudPage = () => {
                                         <td className={`px-4 py-4 text-center font-bold ${item.total_produksi >= item.target ? 'text-green-600' : 'text-red-600'}`}>
                                             {parseFloat(item.total_produksi).toLocaleString('id-ID')}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                        <td className="px-4 py-4 text-center">
                                             <button onClick={() => handleEdit(l)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
                                             <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
                                         </td>

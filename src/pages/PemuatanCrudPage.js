@@ -266,7 +266,7 @@ const PemuatanCrudPage = () => {
                                         <td className={`px-6 py-4 text-sm text-center font-bold ${item.ton_muat >= item.target ? 'text-green-600' : 'text-red-600'}`}>
                                             {parseFloat(item.ton_muat).toLocaleString('id-ID')}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                        <td className="px-6 py-4 text-center text-sm">
                                             <button onClick={() => handleEdit(l)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
                                             <button onClick={() => handleDelete(l.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
                                         </td>
