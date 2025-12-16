@@ -52,21 +52,21 @@ const CrudPage = ({ unitGroup }) => {
                              unitGroup === 'bks' ? 'BKS' : undefined;
 
     const totalHambatan = 
-        parseFloat(formData.h_proses || 0) +
-        parseFloat(formData.h_listrik || 0) +
-        parseFloat(formData.h_mekanik || 0) +
-        parseFloat(formData.h_operator || 0) +
-        parseFloat(formData.h_hujan || 0) +
-        parseFloat(formData.h_kapal || 0) +
-        parseFloat(formData.h_pmc || 0);
+        normalizeNumber(formData.h_proses) +
+        normalizeNumber(formData.h_listrik) +
+        normalizeNumber(formData.h_mekanik) +
+        normalizeNumber(formData.h_operator) +
+        normalizeNumber(formData.h_hujan) +
+        normalizeNumber(formData.h_kapal) +
+        normalizeNumber(formData.h_pmc);
 
     const totalWaktu = parseFloat(formData.jam_operasi || 0) + totalHambatan;
 
     // ➕ TOTAL PRODUKSI DARI SHIFT
     const totalProduksi = 
-        parseFloat(formData.produksi_s1 || 0) +
-        parseFloat(formData.produksi_s2 || 0) +
-        parseFloat(formData.produksi_s3 || 0);
+        normalizeNumber(formData.produksi_s1) +
+        normalizeNumber(formData.produksi_s2) +
+        normalizeNumber(formData.produksi_s3);
 
     // Update otomatis ke produksi_ton
     useEffect(() => {
@@ -139,12 +139,23 @@ const CrudPage = ({ unitGroup }) => {
     // HANDLER INPUT
     const handleChange = (e) => {
         const { name, value, type } = e.target;
-        const val = (type === 'number' || name.startsWith('produksi_s') ) 
-            ? parseFloat(value) || 0 
-            : value;
 
-        setFormData(prev => ({ ...prev, [name]: val }));
+        // Semua input numerik diperlakukan sebagai text
+        if (
+            type === 'number' ||
+            name.startsWith('produksi_') ||
+            name.startsWith('h_') ||
+            name === 'jam_operasi'
+        ) {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value   // SIMPAN STRING DULU (boleh ada koma)
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
+
 
     const handleEdit = (laporanData) => {
         setFormData({ 
@@ -225,20 +236,20 @@ const CrudPage = ({ unitGroup }) => {
             id_unit: formData.id_unit,
             id_laporan: formData.id_laporan,
 
-            produksi_s1: parseFloat(formData.produksi_s1),
-            produksi_s2: parseFloat(formData.produksi_s2),
-            produksi_s3: parseFloat(formData.produksi_s3),
+            produksi_s1: normalizeNumber(formData.produksi_s1),
+            produksi_s2: normalizeNumber(formData.produksi_s2),
+            produksi_s3: normalizeNumber(formData.produksi_s3),
 
             produksi_ton: totalProduksi,
-            jam_operasi: parseFloat(formData.jam_operasi),
+            jam_operasi: normalizeNumber(formData.jam_operasi),
 
-            h_proses: parseFloat(formData.h_proses),
-            h_listrik: parseFloat(formData.h_listrik),
-            h_mekanik: parseFloat(formData.h_mekanik),
-            h_operator: parseFloat(formData.h_operator),
-            h_hujan: parseFloat(formData.h_hujan),
-            h_kapal: parseFloat(formData.h_kapal),
-            h_pmc: parseFloat(formData.h_pmc),
+            h_proses: normalizeNumber(formData.h_proses),
+            h_listrik: normalizeNumber(formData.h_listrik),
+            h_mekanik: normalizeNumber(formData.h_mekanik),
+            h_operator: normalizeNumber(formData.h_operator),
+            h_hujan: normalizeNumber(formData.h_hujan),
+            h_kapal: normalizeNumber(formData.h_kapal),
+            h_pmc: normalizeNumber(formData.h_pmc),
         };
 
         try {
@@ -273,18 +284,17 @@ const CrudPage = ({ unitGroup }) => {
     const getUnitName = (id) => units.find(u => u.id_unit.toString() === id.toString())?.nama_unit || 'N/A';
 
     // RENDER INPUT
-    const renderInput = (label, name, type = 'number', step = '0.01', disabled = false) => (
+    const renderInput = (label, name, type = 'text', step = '0.01', disabled = false) => (
         <div className="flex flex-col">
             <label className="text-sm mb-1">{label}</label>
             <input
                 id={name}
-                type={type}
+                type="text"
+                inputMode="decimal"
                 name={name}
-                value={formData[name]?.toString() || ''} 
+                value={formData[name]?.toString() || ''}
                 onChange={handleChange}
                 className="p-2 border rounded"
-                min={type === 'number' ? "0" : undefined}
-                step={step}
                 disabled={disabled}
             />
         </div>
