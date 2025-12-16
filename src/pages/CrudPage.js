@@ -139,37 +139,24 @@ const CrudPage = ({ unitGroup }) => {
     // HANDLER INPUT
     const handleChange = (e) => {
         const { name, value, type } = e.target;
-        
-        // Jika inputan adalah kolom angka (shift atau hambatan)
-        if (type === 'text' && (name.startsWith('produksi_s') || name.startsWith('h_') || name === 'jam_operasi')) {
-            // Hanya izinkan angka, koma, dan titik
-            const cleanedValue = value.replace(/[^0-9.,]/g, '');
-            setFormData(prev => ({ ...prev, [name]: cleanedValue }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
-        }
+        const val = (type === 'number' || name.startsWith('produksi_s') ) 
+            ? parseFloat(value) || 0 
+            : value;
+
+        setFormData(prev => ({ ...prev, [name]: val }));
     };
 
     const handleEdit = (laporanData) => {
-        const convertToComma = (val) => (val || 0).toString().replace('.', ',');
-
         setFormData({ 
             ...laporanData,
             tanggal: formatDateInput(laporanData.tanggal),
             id_laporan: laporanData.id_laporan,
             id_unit: laporanData.id_unit.toString(),
 
-            produksi_s1: convertToComma(laporanData.produksi_s1),
-            produksi_s2: convertToComma(laporanData.produksi_s2),
-            produksi_s3: convertToComma(laporanData.produksi_s3),
-            jam_operasi: convertToComma(laporanData.jam_operasi),
-            h_proses: convertToComma(laporanData.h_proses),
-            h_listrik: convertToComma(laporanData.h_listrik),
-            h_mekanik: convertToComma(laporanData.h_mekanik),
-            h_operator: convertToComma(laporanData.h_operator),
-            h_hujan: convertToComma(laporanData.h_hujan),
-            h_kapal: convertToComma(laporanData.h_kapal),
-            h_pmc: convertToComma(laporanData.h_pmc),
+            // pastikan shift ikut terisi
+            produksi_s1: laporanData.produksi_s1 || 0,
+            produksi_s2: laporanData.produksi_s2 || 0,
+            produksi_s3: laporanData.produksi_s3 || 0,
         });
         setIsEditMode(true);
         setSuccessMessage(null);
@@ -233,28 +220,25 @@ const CrudPage = ({ unitGroup }) => {
         setError(null);
         setSuccessMessage(null);
 
-        // MENGGUNAKAN parseValue: Mengonversi semua input teks (koma) 
-        // menjadi format angka sistem (titik) sebelum dikirim ke API
         const dataToSend = {
             tanggal: formData.tanggal,
             id_unit: formData.id_unit,
             id_laporan: formData.id_laporan,
 
-            produksi_s1: parseValue(formData.produksi_s1),
-            produksi_s2: parseValue(formData.produksi_s2),
-            produksi_s3: parseValue(formData.produksi_s3),
+            produksi_s1: parseFloat(formData.produksi_s1),
+            produksi_s2: parseFloat(formData.produksi_s2),
+            produksi_s3: parseFloat(formData.produksi_s3),
 
-            // totalProduksi sudah dihitung di atas menggunakan parseValue
-            produksi_ton: totalProduksi, 
-            jam_operasi: parseValue(formData.jam_operasi),
+            produksi_ton: totalProduksi,
+            jam_operasi: parseFloat(formData.jam_operasi),
 
-            h_proses: parseValue(formData.h_proses),
-            h_listrik: parseValue(formData.h_listrik),
-            h_mekanik: parseValue(formData.h_mekanik),
-            h_operator: parseValue(formData.h_operator),
-            h_hujan: parseValue(formData.h_hujan),
-            h_kapal: parseValue(formData.h_kapal),
-            h_pmc: parseValue(formData.h_pmc),
+            h_proses: parseFloat(formData.h_proses),
+            h_listrik: parseFloat(formData.h_listrik),
+            h_mekanik: parseFloat(formData.h_mekanik),
+            h_operator: parseFloat(formData.h_operator),
+            h_hujan: parseFloat(formData.h_hujan),
+            h_kapal: parseFloat(formData.h_kapal),
+            h_pmc: parseFloat(formData.h_pmc),
         };
 
         try {
@@ -271,8 +255,17 @@ const CrudPage = ({ unitGroup }) => {
 
         } catch (error) {
             console.error('Error submitting report:', error.response?.data);
+            
+            // PERBAIKAN UTAMA: Ambil pesan spesifik dari backend (status 409 Conflict)
             const specificErrorMessage = error.response?.data?.message;
-            setError(specificErrorMessage || 'Gagal menyimpan laporan. Terjadi kesalahan server.');
+
+            if (specificErrorMessage) {
+                // Gunakan pesan spesifik (misalnya: "Gagal: Laporan Produksi untuk tanggal dan unit ini sudah ada.")
+                setError(specificErrorMessage);
+            } else {
+                // Fallback ke pesan generik (untuk error 500, network error, dll.)
+                setError('Gagal menyimpan laporan. Terjadi kesalahan server atau koneksi terputus.');
+            }
         }
     };
 
@@ -280,19 +273,19 @@ const CrudPage = ({ unitGroup }) => {
     const getUnitName = (id) => units.find(u => u.id_unit.toString() === id.toString())?.nama_unit || 'N/A';
 
     // RENDER INPUT
-    const renderInput = (label, name, type = 'text', step = '0.01', disabled = false) => (
+    const renderInput = (label, name, type = 'number', step = '0.01', disabled = false) => (
         <div className="flex flex-col">
             <label className="text-sm mb-1">{label}</label>
             <input
                 id={name}
                 type={type}
-                inputMode={type === 'text' ? "decimal" : undefined} // Munculkan keyboard angka di HP
                 name={name}
-                value={formData[name] === 0 ? '' : formData[name]} // Menghindari angka 0 mengganggu saat mulai mengetik
+                value={formData[name]?.toString() || ''} 
                 onChange={handleChange}
                 className="p-2 border rounded"
+                min={type === 'number' ? "0" : undefined}
+                step={step}
                 disabled={disabled}
-                placeholder="0,00"
             />
         </div>
     );
