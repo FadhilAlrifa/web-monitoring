@@ -102,8 +102,9 @@ const PemuatanCrudPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        const cleanedValue = value.replace(',', '.');
         const val = (name === 'ton_muat' || name === 'target')
-            ? parseFloat(value) || 0
+            ? parseFloat(cleanedValue) || 0
             : value;
         setFormData(prev => ({ ...prev, [name]: val }));
     };
@@ -281,14 +282,14 @@ const PemuatanCrudPage = () => {
                         </div>
 
                         {/* Ton Muat (Jam Muat DIHILANGKAN dari form) */}
-                        {renderInput('ton_muat', 'Ton Muat (Ton)', 'number', '1')}
+                        {renderInput('ton_muat', 'Ton Muat (Ton)', 'number', '0.01')}
                     </div>
 
                     <h3 className="text-lg font-semibold text-blue-700 mb-4 border-t pt-4">Target Pemuatan</h3>
 
                     {/* BAGIAN TARGET */}
                     <div className="grid grid-cols-1 md:w-1/4 gap-4 mb-6">
-                        {renderInput('target', 'Target Harian (Ton)', 'number', '1')}
+                        {renderInput('target', 'Target Harian (Ton)', 'number', '0.01')}
                     </div>
 
                     {/* TOTAL PRODUKSI OTOMATIS */}
