@@ -294,7 +294,7 @@ const CrudPage = ({ unitGroup }) => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produksi (TON)</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jam Ops</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jam Operasi</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase">Hambatan</th>
                                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                 </tr>
