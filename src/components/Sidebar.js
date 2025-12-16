@@ -7,7 +7,6 @@ import {
     PackagePlus,
     Ship,
     PackageSearch,
-    Target,
     Menu,
     X
 } from "lucide-react";
@@ -19,6 +18,7 @@ const navItems = [
         path: "/master", 
         type: "link" 
     },
+
     { 
         name: "Produksi",
         icon: <Factory size={18} />,
@@ -30,6 +30,7 @@ const navItems = [
             { name: "Input Pelabuhan", path: "/input/bks", group: "BKS" }
         ]
     },
+
     { 
         name: "Penjumboan",
         icon: <PackagePlus size={18} />,
@@ -39,6 +40,7 @@ const navItems = [
             { name: "Input Penjumboan", path: "/input/penjumboan", group: "Penjumboan" }
         ]
     },
+
     { 
         name: "Pemuatan",
         icon: <Ship size={18} />,
@@ -48,6 +50,7 @@ const navItems = [
             { name: "Input Pemuatan", path: "/input/pemuatan", group: "Pemuatan" }
         ]
     },
+
     { 
         name: "Packing Plant",
         icon: <PackageSearch size={18} />,
@@ -56,20 +59,14 @@ const navItems = [
             { name: "Dashboard Packing Plant", path: "/packing-plant/dashboard", group: "Packing Plant" },
             { name: "Input Packing Plant", path: "/input/packing-plant", group: "Packing Plant" }
         ]
-    },
-    {
-        name: "Pengaturan RKAP",
-        icon: <Target size={18} />,
-        path: "/settings/rkap",
-        type: "link"
     }
 ];
 
 export default function Sidebar() {
     const [openMenu, setOpenMenu] = useState(null);
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false); // State untuk toggle mobile
     const location = useLocation();
-    const { user, isAdmin } = useAuth();
+    const { user } = useAuth();
 
     const canShowInput = (groupName) => {
         if (!user) return false;
@@ -84,14 +81,17 @@ export default function Sidebar() {
     const toggleMenu = (name) => setOpenMenu(openMenu === name ? null : name);
     const activeParent = (item) => item.children?.some(c => location.pathname.startsWith(c.path));
 
-    const handleNavLinkClick = () => {
+    const handleNavLinkClick = (name) => {
+        // Otomatis tutup sidebar di mobile setelah klik NavLink
         if (window.innerWidth < 768) { 
             setIsOpen(false);
         }
     };
 
+
     return (
         <>
+            {/* Mobile Menu Button - Fixed on small screens */}
             <button 
                 className="fixed top-4 left-4 z-[60] md:hidden p-2 bg-blue-600 text-white rounded-full shadow-xl transition hover:bg-blue-700"
                 onClick={() => setIsOpen(!isOpen)}
@@ -99,6 +99,7 @@ export default function Sidebar() {
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
+            {/* Backdrop - Only visible on mobile when open */}
             {isOpen && (
                 <div 
                     className="fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity" 
@@ -106,26 +107,31 @@ export default function Sidebar() {
                 />
             )}
 
+            {/* Sidebar Container */}
             <div className={`
                 w-64 bg-white/90 backdrop-blur-md border-r border-gray-200 shadow-xl flex flex-col 
-                fixed inset-y-0 left-0 z-50 
+                fixed inset-y-0 left-0 z-50 // Mobile positioning
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                
+                // DESKTOP FIX: fixed, dimulai di bawah header (top-[57px]), hitung tinggi sisa layar
                 md:fixed md:top-[57px] md:h-[calc(100vh-57px)] md:translate-x-0 md:flex
             `}>
                 
+                {/* Header (Di sini hanya header internal sidebar, bukan header App) */}
                 <div className="px-6 py-5 border-b bg-white/80 backdrop-blur-xl shadow-sm">
                     <h1 className="text-lg font-semibold text-gray-900">Navigation Panel</h1>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
+                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto"> {/* Scroll diterapkan di nav */}
+
                     {navItems.map(item => {
                         const active = activeParent(item);
 
-                        if (item.path === "/settings/rkap" && !isAdmin) return null;
-
                         return (
                             <div key={item.name}>
+                                
+                                {/* === DROPDOWN ITEM === */}
                                 {item.type === "dropdown" ? (
                                     <>
                                         <button 
@@ -137,6 +143,7 @@ export default function Sidebar() {
                                             <span className="ml-auto opacity-70">{openMenu === item.name ? "▲" : "▼"}</span>
                                         </button>
 
+                                        {/* Dropdown content */}
                                         {openMenu === item.name && (
                                             <div className="pl-8 py-2 space-y-1">
                                                 {item.children?.map(sub => {
@@ -147,7 +154,7 @@ export default function Sidebar() {
                                                         <NavLink
                                                             key={sub.name}
                                                             to={sub.path}
-                                                            onClick={handleNavLinkClick}
+                                                            onClick={() => handleNavLinkClick(sub.name)}
                                                             className={({ isActive }) =>
                                                                 `block px-3 py-2 rounded-lg text-sm transition 
                                                                 ${isActive ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50"}`
@@ -161,10 +168,11 @@ export default function Sidebar() {
                                         )}
                                     </>
                                 ) : (
+                                    /* === SINGLE ITEM === */
                                     <NavLink
                                         to={item.path}
                                         end
-                                        onClick={handleNavLinkClick}
+                                        onClick={() => handleNavLinkClick(item.name)}
                                         className={({ isActive }) =>
                                             `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
                                             ${isActive ? "bg-blue-600 text-white shadow-lg" : "hover:bg-gray-100 text-gray-700"}`
