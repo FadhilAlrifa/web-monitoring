@@ -280,7 +280,7 @@ const PackingPlantCrud = () => {
                     </select>
                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
                     <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center">
-                        CSV ⬇️
+                        Download Document
                     </button>
                 </div>
 

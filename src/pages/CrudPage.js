@@ -70,7 +70,48 @@ const CrudPage = ({ unitGroup }) => {
         if (filterDate) filtered = filtered.filter(item => item.tanggal.split('T')[0] === filterDate);
         return filtered;
     }, [laporan, filterUnitId, filterDate, units]);
-    
+    const exportToCSV = () => {
+        if (filteredLaporan.length === 0) {
+            return alert("Tidak ada data untuk diekspor.");
+        }
+        
+        const headers = [
+            "Tanggal", "Unit Kerja", "Produksi (Ton)", "Jam Operasi", "Total Hambatan",
+            "Hambatan Proses", "Hambatan Listrik", "Hambatan Mekanik", "Hambatan Operator", 
+            "Hambatan Hujan", "Hambatan Kapal", "Hambatan PMC"
+        ];
+        
+        const csvRows = filteredLaporan.map(item => {
+            const unitName = getUnitName(item.id_unit); 
+            const dateFromDB = new Date(item.tanggal);
+            const correctedDate = new Date(dateFromDB.getTime() + (12 * 60 * 60 * 1000));
+            const formattedDate = correctedDate.toLocaleDateString('en-GB'); 
+
+            return [
+                `"${formattedDate}"`,
+                `"${unitName}"`,
+                item.produksi_ton,
+                item.jam_operasi,
+                item.total_hambatan,
+                item.h_proses,
+                item.h_listrik,
+                item.h_mekanik,
+                item.h_operator,
+                item.h_hujan,
+                item.h_kapal,
+                item.h_pmc
+            ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Laporan_Produksi_${allowedGroupName || 'Global'}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
     // --- HANDLER INPUT ---
     const handleChange = (e) => {
         const { name, value, type } = e.target;
@@ -284,6 +325,9 @@ const CrudPage = ({ unitGroup }) => {
                         {units.map(unit => <option key={unit.id_unit} value={unit.id_unit}>{unit.nama_unit}</option>)}
                     </select>
                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
+                    <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center">
+                        Download Document
+                    </button>
                 </div>
 
                 {isLoading ? <p className="text-center p-8">Memuat data...</p> : (
