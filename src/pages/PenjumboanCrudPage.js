@@ -313,16 +313,16 @@ const PenjumboanCrudPage = () => {
                                     return (
                                         <tr key={item.id_laporan} className="hover:bg-gray-50 text-sm">
                                             <td className="px-4 py-4">{new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                                            <td className="px-4 py-4 font-medium text-blue-700">{uName}</td>
+                                            <td className="px-4 py-4 font-medium text-black">{uName}</td>
                                             <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_1_ton).toLocaleString('id-ID')}</td>
                                             <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_2_ton).toLocaleString('id-ID')}</td>
                                             <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_3_ton).toLocaleString('id-ID')}</td>
                                             <td className={`px-4 py-4 text-center font-bold ${parseFloat(item.total_produksi) >= parseFloat(item.target) ? 'text-green-600' : 'text-red-600'}`}>
                                                 {parseFloat(item.total_produksi).toLocaleString('id-ID')}
                                             </td>
-                                            <td className="px-4 py-4 text-center space-x-2">
-                                                <button onClick={() => handleEdit(item)} className="text-blue-600 hover:underline">Edit</button>
-                                                <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 hover:underline">Hapus</button>
+                                            <td className="px-6 py-4 text-center space-x-2">
+                                                <button onClick={() => handleEdit(item)} className="text-blue-600 bg-blue-50 px-3 py-1 rounded">Edit</button>
+                                                <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 bg-red-50 px-3 py-1 rounded">Hapus</button>
                                             </td>
                                         </tr>
                                     );

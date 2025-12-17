@@ -306,8 +306,8 @@ const PackingPlantCrud = () => {
                                             {parseFloat(item.ton_muat).toLocaleString('id-ID')}
                                         </td>
                                         <td className="px-6 py-4 text-center space-x-2">
-                                            <button onClick={() => handleEdit(item)} className="text-blue-600 hover:underline">Edit</button>
-                                            <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 hover:underline">Hapus</button>
+                                            <button onClick={() => handleEdit(item)} className="text-blue-600 bg-blue-50 px-3 py-1 rounded">Edit</button>
+                                            <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 bg-red-50 px-3 py-1 rounded">Hapus</button>
                                         </td>
                                     </tr>
                                 ))}
