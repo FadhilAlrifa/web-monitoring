@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,7 +12,7 @@ const initialFormData = {
     shift_1_ton: '', 
     shift_2_ton: '', 
     shift_3_ton: '', 
-    total_ton: '',   // Field input manual khusus Total Polysling
+    total_ton: '',   
     target: '650',
     id_laporan: null,
 };
@@ -31,21 +31,18 @@ const PenjumboanCrudPage = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // --- HELPER: Konversi string (koma/titik) ke float valid ---
     const parseValue = (val) => {
         if (!val) return 0;
         const cleaned = val.toString().replace(',', '.');
         return parseFloat(cleaned) || 0;
     };
 
-    // Deteksi Nama Unit Kerja
     const selectedUnitName = useMemo(() => {
-        return units.find(u => u.id_unit.toString() === formData.id_unit)?.nama_unit || '';
+        return units.find(u => u.id_unit.toString() === formData.id_unit.toString())?.nama_unit || '';
     }, [formData.id_unit, units]);
     
     const isTotalPolysling = selectedUnitName === 'Total Polysling';
 
-    // Perhitungan Total Produksi Otomatis
     const totalProduksiDisplay = useMemo(() => {
         if (isTotalPolysling) {
             return parseValue(formData.total_ton);
@@ -56,38 +53,38 @@ const PenjumboanCrudPage = () => {
         }
     }, [formData, isTotalPolysling]);
 
-    // --- LOGIKA FILTER TABEL ---
     const filteredLaporan = useMemo(() => {
-        if (!laporan) return [];
-        let filtered = laporan;
+        if (!laporan || units.length === 0) return [];
+        
+        let filtered = [...laporan];
+        
         const validUnitIds = new Set(units.map(u => u.id_unit.toString()));
         filtered = filtered.filter(item => validUnitIds.has(item.id_unit.toString()));
-        if (filterUnitId) filtered = filtered.filter(item => item.id_unit.toString() === filterUnitId);
-        if (filterDate) filtered = filtered.filter(item => item.tanggal.split('T')[0] === filterDate);
+
+        if (filterUnitId) {
+            filtered = filtered.filter(item => item.id_unit.toString() === filterUnitId.toString());
+        }
+        if (filterDate) {
+            filtered = filtered.filter(item => item.tanggal.split('T')[0] === filterDate);
+        }
         return filtered;
     }, [laporan, filterUnitId, filterDate, units]);
+
     const exportToCSV = () => {
-        if (filteredLaporan.length === 0) {
-            return alert("Tidak ada data untuk diekspor.");
-        }
+        if (filteredLaporan.length === 0) return alert("Tidak ada data untuk diekspor.");
         
-        const headers = [
-            "Tanggal", "Unit Kerja", "Target (Ton)", "Shift 1 (Ton)", 
-            "Shift 2 (Ton)", "Shift 3 (Ton)", "Total Produksi (Ton)"
-        ];
-        
+        const headers = ["Tanggal", "Unit Kerja", "Target (Ton)", "S1", "S2", "S3", "Total Produksi"];
         const csvRows = filteredLaporan.map(item => {
             const unitName = units.find(u => u.id_unit.toString() === item.id_unit.toString())?.nama_unit || 'N/A';
-            const dateObj = new Date(item.tanggal);
-            const formattedDate = dateObj.toLocaleDateString('en-GB'); // format dd/mm/yyyy
+            const isTotalType = unitName === 'Total Polysling';
 
             return [
-                `"${formattedDate}"`,
+                `"${new Date(item.tanggal).toLocaleDateString('en-GB')}"`,
                 `"${unitName}"`,
                 item.target,
-                item.shift_1_ton,
-                item.shift_2_ton,
-                item.shift_3_ton,
+                isTotalType ? 0 : item.shift_1_ton,
+                isTotalType ? 0 : item.shift_2_ton,
+                isTotalType ? 0 : item.shift_3_ton,
                 item.total_produksi
             ].join(',');
         });
@@ -101,7 +98,7 @@ const PenjumboanCrudPage = () => {
         link.click();
         document.body.removeChild(link);
     };
-    // --- FETCH DATA ---
+
     const fetchMasterData = async () => {
         try {
             const unitsRes = await axios.get(`${API_URL}/api/units`); 
@@ -135,10 +132,8 @@ const PenjumboanCrudPage = () => {
         if (user) fetchLaporan();
     }, [user, isAdmin]);
 
-    // --- HANDLERS ---
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Validasi: Hanya izinkan angka, koma, dan satu titik
         if (name.endsWith('_ton') || name === 'target' || name === 'total_ton') {
             const regex = /^[0-9.,]*$/;
             if (value === '' || regex.test(value)) {
@@ -156,7 +151,6 @@ const PenjumboanCrudPage = () => {
 
         if (!formData.id_unit) return setError("Silakan pilih Unit Kerja.");
 
-        // KONVERSI AKHIR UNTUK PAYLOAD DATABASE
         const payload = {
             ...formData,
             shift_1_ton: isTotalPolysling ? 0 : parseValue(formData.shift_1_ton),
@@ -166,7 +160,6 @@ const PenjumboanCrudPage = () => {
             target: parseValue(formData.target),
         };
 
-        // Hapus field temporary react sebelum kirim ke backend
         delete payload.total_ton;
 
         try {
@@ -190,7 +183,6 @@ const PenjumboanCrudPage = () => {
             ...item,
             tanggal: item.tanggal.split('T')[0],
             id_unit: item.id_unit.toString(),
-            // Konversi titik ke koma agar tampilan edit sesuai format lokal
             shift_1_ton: item.shift_1_ton.toString().replace('.', ','),
             shift_2_ton: item.shift_2_ton.toString().replace('.', ','),
             shift_3_ton: item.shift_3_ton.toString().replace('.', ','),
@@ -222,7 +214,6 @@ const PenjumboanCrudPage = () => {
             {successMessage && <div className="bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded mb-4">{successMessage}</div>}
             {error && <div className="bg-red-100 border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-            {/* FORM INPUT SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-lg mb-10 border border-gray-200">
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -230,7 +221,6 @@ const PenjumboanCrudPage = () => {
                             <label className="text-sm font-medium text-gray-700 mb-1">Tanggal</label>
                             <input type="date" name="tanggal" value={formData.tanggal} onChange={handleChange} required className="p-2 border rounded-md" disabled={isEditMode} />
                         </div>
-
                         <div className="flex flex-col">
                             <label className="text-sm font-medium text-gray-700 mb-1">Unit Kerja</label>
                             <select name="id_unit" value={formData.id_unit.toString()} onChange={handleChange} required className="p-2 border rounded-md" disabled={isEditMode}>
@@ -238,7 +228,6 @@ const PenjumboanCrudPage = () => {
                                 {units.map(u => <option key={u.id_unit} value={u.id_unit.toString()}>{u.nama_unit}</option>)}
                             </select>
                         </div>
-
                         <div className="flex flex-col">
                             <label className="text-sm font-medium text-gray-700 mb-1">Target Harian (Ton)</label>
                             <input type="text" inputMode="decimal" name="target" value={formData.target} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md" required />
@@ -256,14 +245,12 @@ const PenjumboanCrudPage = () => {
                                 <input type="text" inputMode="decimal" name="total_ton" value={formData.total_ton} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md focus:ring-blue-500" required />
                             </div>
                         ) : (
-                            <>
-                                {['1','2','3'].map(num => (
-                                    <div key={num} className="flex flex-col">
-                                        <label className="text-sm font-medium text-gray-700 mb-1">Shift {num} (Ton)</label>
-                                        <input type="text" inputMode="decimal" name={`shift_${num}_ton`} value={formData[`shift_${num}_ton`]} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md focus:ring-blue-500" />
-                                    </div>
-                                ))}
-                            </>
+                            ['1','2','3'].map(num => (
+                                <div key={num} className="flex flex-col">
+                                    <label className="text-sm font-medium text-gray-700 mb-1">Shift {num} (Ton)</label>
+                                    <input type="text" inputMode="decimal" name={`shift_${num}_ton`} value={formData[`shift_${num}_ton`]} onChange={handleChange} placeholder="0,00" className="p-2 border rounded-md focus:ring-blue-500" />
+                                </div>
+                            ))
                         )}
                     </div>
 
@@ -287,12 +274,11 @@ const PenjumboanCrudPage = () => {
                 </form>
             </div>
 
-            {/* DATA TABLE SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                     <select value={filterUnitId} onChange={(e) => setFilterUnitId(e.target.value)} className="p-2 border rounded-md flex-1">
                         <option value="">-- Semua Unit --</option>
-                        {units.map(unit => <option key={unit.id_unit} value={unit.id_unit}>{unit.nama_unit}</option>)}
+                        {units.map(unit => <option key={unit.id_unit} value={unit.id_unit.toString()}>{unit.nama_unit}</option>)}
                     </select>
                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border rounded-md flex-1" />
                     <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center">
@@ -315,22 +301,26 @@ const PenjumboanCrudPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredLaporan.map((item) => (
-                                    <tr key={item.id_laporan} className="hover:bg-gray-50 text-sm">
-                                        <td className="px-4 py-4">{new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                                        <td className="px-4 py-4 font-medium">{getUnitName(item.id_unit)}</td>
-                                        <td className="px-4 py-4 text-center">{parseFloat(item.shift_1_ton).toLocaleString('id-ID')}</td>
-                                        <td className="px-4 py-4 text-center">{parseFloat(item.shift_2_ton).toLocaleString('id-ID')}</td>
-                                        <td className="px-4 py-4 text-center">{parseFloat(item.shift_3_ton).toLocaleString('id-ID')}</td>
-                                        <td className={`px-4 py-4 text-center font-bold ${item.total_produksi >= item.target ? 'text-green-600' : 'text-red-600'}`}>
-                                            {parseFloat(item.total_produksi).toLocaleString('id-ID')}
-                                        </td>
-                                        <td className="px-4 py-4 text-center">
-                                            <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md text-xs font-semibold transition">Edit</button>
-                                            <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-md text-xs font-semibold transition">Hapus</button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filteredLaporan.map((item) => {
+                                    const uName = getUnitName(item.id_unit);
+                                    const isTotalType = uName === 'Total Polysling';
+                                    return (
+                                        <tr key={item.id_laporan} className="hover:bg-gray-50 text-sm">
+                                            <td className="px-4 py-4">{new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                                            <td className="px-4 py-4 font-medium text-blue-700">{uName}</td>
+                                            <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_1_ton).toLocaleString('id-ID')}</td>
+                                            <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_2_ton).toLocaleString('id-ID')}</td>
+                                            <td className="px-4 py-4 text-center text-gray-500">{isTotalType ? '-' : parseFloat(item.shift_3_ton).toLocaleString('id-ID')}</td>
+                                            <td className={`px-4 py-4 text-center font-bold ${parseFloat(item.total_produksi) >= parseFloat(item.target) ? 'text-green-600' : 'text-red-600'}`}>
+                                                {parseFloat(item.total_produksi).toLocaleString('id-ID')}
+                                            </td>
+                                            <td className="px-4 py-4 text-center space-x-2">
+                                                <button onClick={() => handleEdit(item)} className="text-blue-600 hover:underline">Edit</button>
+                                                <button onClick={() => handleDelete(item.id_laporan)} className="text-red-600 hover:underline">Hapus</button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
