@@ -151,16 +151,18 @@ const PenjumboanCrudPage = () => {
 
         if (!formData.id_unit) return setError("Silakan pilih Unit Kerja.");
 
+        // PERBAIKAN LOGIKA PAYLOAD:
+        // Jika Total Polysling, kita masukkan nilainya ke shift_1_ton agar tersimpan di DB
         const payload = {
-            ...formData,
-            shift_1_ton: isTotalPolysling ? 0 : parseValue(formData.shift_1_ton),
+            tanggal: formData.tanggal,
+            id_unit: formData.id_unit,
+            target: parseValue(formData.target),
+            shift_1_ton: isTotalPolysling ? parseValue(formData.total_ton) : parseValue(formData.shift_1_ton),
             shift_2_ton: isTotalPolysling ? 0 : parseValue(formData.shift_2_ton),
             shift_3_ton: isTotalPolysling ? 0 : parseValue(formData.shift_3_ton),
-            total_produksi: totalProduksiDisplay,
-            target: parseValue(formData.target),
+            // Tetap kirim total_produksi sebagai cadangan jika backend sudah diupdate
+            total_produksi: totalProduksiDisplay, 
         };
-
-        delete payload.total_ton;
 
         try {
             if (isEditMode) {
@@ -179,14 +181,18 @@ const PenjumboanCrudPage = () => {
     };
 
     const handleEdit = (item) => {
+        const uName = getUnitName(item.id_unit);
+        const isTotal = uName === 'Total Polysling';
+
         setFormData({
             ...item,
             tanggal: item.tanggal.split('T')[0],
             id_unit: item.id_unit.toString(),
-            shift_1_ton: item.shift_1_ton.toString().replace('.', ','),
-            shift_2_ton: item.shift_2_ton.toString().replace('.', ','),
-            shift_3_ton: item.shift_3_ton.toString().replace('.', ','),
-            total_ton: item.total_produksi.toString().replace('.', ','),
+            shift_1_ton: isTotal ? '' : item.shift_1_ton.toString().replace('.', ','),
+            shift_2_ton: isTotal ? '' : item.shift_2_ton.toString().replace('.', ','),
+            shift_3_ton: isTotal ? '' : item.shift_3_ton.toString().replace('.', ','),
+            // Ambil nilai dari shift_1_ton atau total_produksi untuk dimasukkan ke field input manual
+            total_ton: isTotal ? (item.total_produksi || item.shift_1_ton).toString().replace('.', ',') : '',
             target: item.target.toString().replace('.', ','),
         });
         setIsEditMode(true);
